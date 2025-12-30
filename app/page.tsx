@@ -15,6 +15,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import Tabs from "@/components/Tabs";
 import PotsTab from "@/components/PotsTab";
 import GroupsTab from "@/components/GroupsTab";
@@ -58,13 +59,27 @@ const FLAG_TRANSITION = {
 } as const;
 
 export default function Home() {
-  const [showIntro, setShowIntro] = useState(true);
+  // hydration 에러 방지를 위해 초기값을 null로 설정
+  const [showIntro, setShowIntro] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<"pots" | "groups" | "stadiums">("groups");
 
   const introVideoRef = useRef<HTMLVideoElement>(null);
 
+  // localStorage에서 introSeen 값 확인 (클라이언트에서만 실행)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const introSeen = localStorage.getItem("introSeen");
+      // introSeen이 없거나 false이면 Intro 표시, true이면 건너뛰기
+      setShowIntro(introSeen !== "true");
+    }
+  }, []);
+
   // 핸들러 최적화
   const handleSkipIntro = useCallback(() => {
+    // localStorage에 introSeen = true 저장
+    if (typeof window !== "undefined") {
+      localStorage.setItem("introSeen", "true");
+    }
     setShowIntro(false);
   }, []);
 
@@ -82,6 +97,11 @@ export default function Home() {
 
   // 계산된 값 메모이제이션
   const statsText = useMemo(() => `Road to 2026: ${countries.length} Nations | ${stadiums.length} Host Cities`, []);
+
+  // hydration 완료 전에는 아무것도 렌더링하지 않음 (hydration 에러 방지)
+  if (showIntro === null) {
+    return null;
+  }
 
   return (
     <>
@@ -143,8 +163,152 @@ export default function Home() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-blue-50 to-green-50">
+            className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="max-w-7xl mx-auto">
+              {/* Hero 섹션 */}
+              <section className="p-4 md:p-8 pt-8 md:pt-12 pb-12 md:pb-16">
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
+                    2026 북중미 월드컵 경기장 & 데이터 플랫폼
+                  </h1>
+                  <p className="text-lg md:text-xl text-gray-600 mb-8">
+                    경기장, 국가, 선수 정보를 지도와 3D 모델로 한눈에 확인하세요.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
+                    <Link
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab("groups");
+                        setTimeout(() => {
+                          const element = document.getElementById("match-schedule");
+                          if (element) {
+                            element.scrollIntoView({ behavior: "smooth", block: "start" });
+                          } else {
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }
+                        }, 100);
+                      }}
+                      className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                    >
+                      경기 일정
+                    </Link>
+                    <Link
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab("stadiums");
+                        setTimeout(() => {
+                          const element = document.getElementById("stadium-map");
+                          if (element) {
+                            element.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        }, 100);
+                      }}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      경기장 지도 보기
+                    </Link>
+                    <Link
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab("stadiums");
+                        setTimeout(() => {
+                          const element = document.getElementById("stadium-list");
+                          if (element) {
+                            element.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        }, 100);
+                      }}
+                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                    >
+                      경기장 리스트
+                    </Link>
+                    <Link
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab("pots");
+                        setTimeout(() => {
+                          const element = document.getElementById("pots-content");
+                          if (element) {
+                            element.scrollIntoView({ behavior: "smooth", block: "start" });
+                          } else {
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }
+                        }, 100);
+                      }}
+                      className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                    >
+                      참가 국가
+                    </Link>
+                  </div>
+                </div>
+              </section>
+
+              {/* 월드컵 상태 요약 섹션 */}
+              <section className="px-4 md:px-8 mb-12 md:mb-16">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                    <h3 className="text-sm text-gray-600 mb-2">개최국</h3>
+                    <p className="text-base font-semibold text-gray-800">미국 · 캐나다 · 멕시코</p>
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                    <h3 className="text-sm text-gray-600 mb-2">경기장 수</h3>
+                    <p className="text-2xl font-bold text-gray-800">{stadiums.length}+</p>
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                    <h3 className="text-sm text-gray-600 mb-2">참가국</h3>
+                    <p className="text-2xl font-bold text-gray-800">48개국</p>
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                    <h3 className="text-sm text-gray-600 mb-2">대회 시작</h3>
+                    <p className="text-base font-semibold text-gray-800">2026년 6월</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* 주요 경기장 하이라이트 */}
+              <section className="px-4 md:px-8 mb-12 md:mb-16">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">주요 경기장</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {stadiums
+                    .filter((s) => s.sketchfabModelId)
+                    .slice(0, 3)
+                    .map((stadium) => (
+                      <Link
+                        key={stadium.id}
+                        href={`/stadiums/${stadium.id}`}
+                        className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-6"
+                      >
+                        <h3 className="text-xl font-semibold text-gray-800 mb-2">{stadium.name}</h3>
+                        <p className="text-gray-600 text-sm mb-2">{stadium.city}, {stadium.country}</p>
+                        <p className="text-gray-500 text-xs">수용 인원: {stadium.capacity.toLocaleString()}명</p>
+                      </Link>
+                    ))}
+                </div>
+              </section>
+
+              {/* 지도 미리보기 섹션 */}
+              <section className="px-4 md:px-8 mb-12 md:mb-16">
+                <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">경기장 위치를 지도로 보기</h2>
+                  <p className="text-gray-600 mb-6">북중미 지역의 모든 경기장 위치를 한눈에 확인하세요.</p>
+                  <button
+                    onClick={() => {
+                      setActiveTab("stadiums");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    경기장 지도 보기
+                  </button>
+                </div>
+              </section>
+
+              {/* 기존 탭 네비게이션 및 콘텐츠 */}
+              <section className="p-4 md:p-8">
               {/* 헤더: 제목 */}
               <div className="flex justify-center items-center mb-6 md:mb-8">
                 <h1 className="text-2xl md:text-4xl font-bold text-gray-800">2026 북중미 월드컵</h1>
@@ -159,6 +323,15 @@ export default function Home() {
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.7 }} className="mt-6">
                 {activeTab === "pots" ? <PotsTab /> : activeTab === "groups" ? <GroupsTab /> : <StadiumsTab />}
               </motion.div>
+              </section>
+
+              {/* Footer */}
+              <footer className="px-4 md:px-8 py-8 mt-16 border-t border-gray-200">
+                <div className="text-center text-gray-600 text-sm">
+                  <p className="mb-2">2026 World Cup Data Project</p>
+                  <p>Built with Next.js & Sketchfab</p>
+                </div>
+              </footer>
             </motion.div>
           </motion.main>
         )}

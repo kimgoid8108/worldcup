@@ -16,6 +16,7 @@ import { pots } from "@/data/pots";
 import { getPlayersByCountry, Player } from "@/data/players";
 import CountryModal from "./CountryModal";
 import PlayerModal from "./PlayerModal";
+import Flag from "./Flag";
 
 export default function GroupsTab() {
   // 선택된 국가 ID (국가 모달 표시용)
@@ -61,6 +62,13 @@ export default function GroupsTab() {
    */
   const getPlayoffName = (playoffId: string): string => {
     const playoffNames: Record<string, string> = {
+      playoff_europe_d: "유럽 플레이오프 D조 승자",
+      playoff_europe_a: "유럽 플레이오프 A조 승자",
+      playoff_europe_c: "유럽 플레이오프 C조 승자",
+      playoff_europe_b: "유럽 플레이오프 B조 승자",
+      playoff_fifa_1: "FIFA 플레이오프 1조 승자",
+      playoff_fifa_2: "FIFA 플레이오프 2조 승자",
+      // 하위 호환성
       playoff_europe: "유럽 플레이오프 승자",
       playoff_a: "플레이오프 A 승자",
       playoff_b: "플레이오프 B 승자",
@@ -78,12 +86,21 @@ export default function GroupsTab() {
    */
   const getPlayoffParticipants = (playoffId: string): string[] => {
     const participants: Record<string, string[]> = {
-      playoff_europe: ["scotland", "norway", "sweden", "denmark", "poland", "turkey"], // 유럽 플레이오프 참가국
-      playoff_a: ["ghana", "capeverde", "ivorycoast", "algeria"], // 플레이오프 A 참가국
-      playoff_b: ["uzbekistan", "jordan", "thailand", "vietnam"], // 플레이오프 B 참가국
-      playoff_c: ["newzealand", "panama", "jamaica", "costa"], // 플레이오프 C 참가국
-      playoff_1: ["china", "india", "saudiarabia", "uae"], // 플레이오프 1 참가국
-      playoff_2: ["russia", "iran", "qatar", "egypt"], // 플레이오프 2 참가국
+      // 유럽 플레이오프
+      playoff_europe_d: ["denmark", "northmacedonia", "czechrepublic", "ireland"], // 유럽 플레이오프 D조: 덴마크/북마케도니아/체코/아일랜드
+      playoff_europe_a: ["italy", "northernireland", "wales", "bosnia"], // 유럽 플레이오프 A조: 이탈리아/북아일랜드/웨일스/보스니아 헤르체고비나
+      playoff_europe_c: ["turkey", "romania", "slovakia", "kosovo"], // 유럽 플레이오프 C조: 튀르키예/루마니아/슬로바키아/코소보
+      playoff_europe_b: ["ukraine", "sweden", "poland", "albania"], // 유럽 플레이오프 B조: 우크라이나/스웨덴/폴란드/알바니아
+      // FIFA 플레이오프
+      playoff_fifa_2: ["bolivia", "suriname", "iraq"], // FIFA 플레이오프 2조: 볼리비아/수리남/이라크
+      playoff_fifa_1: ["newcaledonia", "jamaica", "congodr"], // FIFA 플레이오프 1조: 누벨칼레도니/자메이카/콩고민주공화국
+      // 하위 호환성
+      playoff_europe: ["scotland", "norway", "sweden", "denmark", "poland", "turkey"],
+      playoff_a: ["ghana", "capeverde", "ivorycoast", "algeria"],
+      playoff_b: ["uzbekistan", "jordan", "thailand", "vietnam"],
+      playoff_c: ["newzealand", "panama", "jamaica", "costa"],
+      playoff_1: ["china", "india", "saudiarabia", "uae"],
+      playoff_2: ["russia", "iran", "qatar", "egypt"],
     };
     return participants[playoffId] || [];
   };
@@ -182,6 +199,42 @@ export default function GroupsTab() {
     return results;
   }, [searchQuery]);
 
+  // 날짜별로 정렬된 전체 경기 일정 (최신순)
+  const sortedMatchesByDate = useMemo(() => {
+    const allMatches: Array<Match & { groupId: string; groupName: string }> = [];
+
+    groups.forEach((group) => {
+      group.matches.forEach((match) => {
+        allMatches.push({
+          ...match,
+          groupId: group.id,
+          groupName: group.name,
+        });
+      });
+    });
+
+    // 날짜와 시간 기준으로 정렬 (최신순)
+    return allMatches.sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      if (dateCompare !== 0) return dateCompare;
+      return a.time.localeCompare(b.time);
+    });
+  }, []);
+
+  // 날짜별로 그룹화된 경기 일정
+  const matchesByDate = useMemo(() => {
+    const grouped: Record<string, Array<Match & { groupId: string; groupName: string }>> = {};
+
+    sortedMatchesByDate.forEach((match) => {
+      if (!grouped[match.date]) {
+        grouped[match.date] = [];
+      }
+      grouped[match.date].push(match);
+    });
+
+    return grouped;
+  }, [sortedMatchesByDate]);
+
   return (
     <div>
       {/* 선수 상세 정보 모달 */}
@@ -223,11 +276,11 @@ export default function GroupsTab() {
               {/* 모달 헤더 */}
               <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between">
                 <h3 className="text-2xl font-bold flex items-center gap-3">
-                  <span className="text-2xl">{team1 ? team1.flag : "⚽"}</span>
+                  {team1 ? <Flag country={team1} size="md" /> : <span className="text-2xl">⚽</span>}
                   <span>{team1Name}</span>
                   <span className="px-3 py-1 bg-white text-blue-600 rounded-full font-bold text-sm">VS</span>
                   <span>{team2Name}</span>
-                  <span className="text-2xl">{team2 ? team2.flag : "⚽"}</span>
+                  {team2 ? <Flag country={team2} size="md" /> : <span className="text-2xl">⚽</span>}
                 </h3>
                 <button
                   onClick={() => setSelectedMatch(null)}
@@ -273,7 +326,7 @@ export default function GroupsTab() {
                   {team1 && team1Players.length > 0 && (
                     <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
                       <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                        <span className="text-lg">{team1 ? team1.flag : "⚽"}</span>
+                        {team1 ? <Flag country={team1} size="sm" /> : <span className="text-lg">⚽</span>}
                         <span>{team1Name} 선수 명단</span>
                       </h4>
                       <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -315,7 +368,7 @@ export default function GroupsTab() {
                   {team2 && team2Players.length > 0 && (
                     <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
                       <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                        <span className="text-lg">{team2 ? team2.flag : "⚽"}</span>
+                        {team2 ? <Flag country={team2} size="sm" /> : <span className="text-lg">⚽</span>}
                         <span>{team2Name} 선수 명단</span>
                       </h4>
                       <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -407,7 +460,7 @@ export default function GroupsTab() {
                         className="p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer"
                       >
                         <div className="flex items-center gap-2 mb-2">
-                          {country && <span className="text-xl">{country.flag}</span>}
+                          {country && <Flag country={country} size="sm" />}
                           <span className="text-xs text-gray-600">{countryName}</span>
                         </div>
                         <p className="font-semibold text-gray-800 mb-1">
@@ -430,6 +483,78 @@ export default function GroupsTab() {
               </div>
             )}
           </div>
+
+        {/* 경기 일정 섹션 */}
+        <div id="match-schedule" className="mb-12">
+          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">
+              전체 경기 일정
+            </h2>
+
+            <div className="space-y-6">
+              {Object.keys(matchesByDate).map((date) => {
+                const dateMatches = matchesByDate[date];
+                const dateObj = new Date(date);
+                const formattedDate = `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월 ${dateObj.getDate()}일`;
+                const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][dateObj.getDay()];
+
+                return (
+                  <div key={date} className="border-b-2 border-gray-200 pb-6 last:border-b-0">
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
+                      📅 {formattedDate} ({dayOfWeek}요일)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {dateMatches.map((match) => {
+                        const team1 = getCountryById(match.team1);
+                        const team2 = getCountryById(match.team2);
+                        const team1Name = team1 ? team1.name : getPlayoffName(match.team1);
+                        const team2Name = team2 ? team2.name : getPlayoffName(match.team2);
+                        const stadium = getStadium(match.stadium);
+
+                        return (
+                          <button
+                            key={match.id}
+                            onClick={() => setSelectedMatch(match)}
+                            className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:shadow-md transition-all text-left"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                                {match.groupName}
+                              </span>
+                              <span className="text-sm font-medium text-gray-600">
+                                🕐 {match.time}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              <div className="flex flex-col items-center gap-1">
+                                {team1 ? <Flag country={team1} size="md" /> : <span className="text-2xl">⚽</span>}
+                                <span className="text-sm font-semibold text-gray-800 text-center">
+                                  {team1Name}
+                                </span>
+                              </div>
+                              <span className="text-lg font-bold text-gray-500">VS</span>
+                              <div className="flex flex-col items-center gap-1">
+                                {team2 ? <Flag country={team2} size="md" /> : <span className="text-2xl">⚽</span>}
+                                <span className="text-sm font-semibold text-gray-800 text-center">
+                                  {team2Name}
+                                </span>
+                              </div>
+                            </div>
+                            {stadium && (
+                              <div className="text-xs text-gray-600 text-center mt-2">
+                                🏟️ {stadium.name}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
         {/* 조 탭 버튼들 (A~L) */}
         <div className="mb-6">
@@ -493,7 +618,7 @@ export default function GroupsTab() {
                                     key={participantId}
                                     className="flex items-center gap-1 px-2 py-1 bg-white rounded border border-gray-200 text-xs"
                                   >
-                                    <span>{participant.flag}</span>
+                                    <Flag country={participant} size="sm" />
                                     <span className="text-gray-700">{participant.name}</span>
                                   </div>
                                 );
@@ -512,12 +637,12 @@ export default function GroupsTab() {
                     <button
                       key={countryId}
                       onClick={() => setSelectedCountry(countryId)}
-                      className={`px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all flex flex-col items-center gap-2 border-2 border-blue-200 hover:border-blue-400 hover:shadow-md relative ${
+                      className={`px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all flex flex-col items-center justify-center gap-2 border-2 border-blue-200 hover:border-blue-400 hover:shadow-md relative ${
                         isHighlighted ? "ring-2 ring-yellow-400" : ""
                       }`}
                     >
-                      <span className="text-3xl">{country.flag}</span>
-                      <span className="text-sm font-semibold text-gray-800">
+                      <Flag country={country} size="lg" />
+                      <span className="text-sm font-semibold text-gray-800 text-center">
                         {country.name}
                       </span>
                     </button>
@@ -537,11 +662,9 @@ export default function GroupsTab() {
                   const team1 = getCountryById(match.team1);
                   const team2 = getCountryById(match.team2);
 
-                  // 팀 이름과 국기 설정 (플레이오프 승자 처리 포함)
+                  // 팀 이름 설정 (플레이오프 승자 처리 포함)
                   const team1Name = team1 ? team1.name : getPlayoffName(match.team1);
                   const team2Name = team2 ? team2.name : getPlayoffName(match.team2);
-                  const team1Flag = team1 ? team1.flag : "⚽";
-                  const team2Flag = team2 ? team2.flag : "⚽";
 
                   const isTeam1Highlighted = team1 && searchQuery && matchesSearch(match.team1, searchQuery);
                   const isTeam2Highlighted = team2 && searchQuery && matchesSearch(match.team2, searchQuery);
@@ -557,7 +680,7 @@ export default function GroupsTab() {
                         <div className={`flex items-center gap-3 flex-1 min-w-[120px] ${
                           isTeam1Highlighted ? "ring-2 ring-yellow-400 rounded-lg p-2" : ""
                         }`}>
-                          <span className="text-2xl">{team1Flag}</span>
+                          {team1 ? <Flag country={team1} size="md" /> : <span className="text-2xl">⚽</span>}
                           <span className="font-semibold text-gray-800 text-sm md:text-base">
                             {team1Name}
                           </span>
@@ -571,7 +694,7 @@ export default function GroupsTab() {
                           <span className="font-semibold text-gray-800 text-sm md:text-base">
                             {team2Name}
                           </span>
-                          <span className="text-2xl">{team2Flag}</span>
+                          {team2 ? <Flag country={team2} size="md" /> : <span className="text-2xl">⚽</span>}
                         </div>
                       </div>
 

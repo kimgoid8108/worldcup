@@ -37,7 +37,7 @@ export const groups: Group[] = [
   {
     id: "A",
     name: "A조",
-    countries: ["mexico", "southafrica", "southkorea", "playoff_europe"], // 멕시코, 남아프리카공화국, 대한민국, 유럽 플레이오프 승자
+    countries: ["mexico", "southafrica", "southkorea", "playoff_europe_d"], // 멕시코, 남아프리카공화국, 대한민국, 유럽 플레이오프 D조 승자
     matches: [
       {
         id: "A1",
@@ -52,7 +52,7 @@ export const groups: Group[] = [
         date: "2026-06-12",
         time: "14:00",
         team1: "southkorea",
-        team2: "playoff_europe",
+        team2: "playoff_europe_d",
         stadium: "metlife",
       },
       {
@@ -68,7 +68,7 @@ export const groups: Group[] = [
         date: "2026-06-18",
         time: "20:00",
         team1: "southafrica",
-        team2: "playoff_europe",
+        team2: "playoff_europe_d",
         stadium: "akron",
       },
       {
@@ -76,7 +76,7 @@ export const groups: Group[] = [
         date: "2026-06-23",
         time: "20:00",
         team1: "mexico",
-        team2: "playoff_europe",
+        team2: "playoff_europe_d",
         stadium: "azteca",
       },
       {
@@ -92,14 +92,14 @@ export const groups: Group[] = [
   {
     id: "B",
     name: "B조",
-    countries: ["canada", "playoff_a", "qatar", "switzerland"], // 캐나다, 플레이오프 A 승자, 카타르, 스위스
+    countries: ["canada", "playoff_europe_a", "qatar", "switzerland"], // 캐나다, 유럽 플레이오프 A조 승자, 카타르, 스위스
     matches: [
       {
         id: "B1",
         date: "2026-06-12",
         time: "20:00",
         team1: "canada",
-        team2: "playoff_a",
+        team2: "playoff_europe_a",
         stadium: "bmo",
       },
       {
@@ -122,7 +122,7 @@ export const groups: Group[] = [
         id: "B4",
         date: "2026-06-19",
         time: "20:00",
-        team1: "playoff_a",
+        team1: "playoff_europe_a",
         team2: "switzerland",
         stadium: "metlife",
       },
@@ -138,7 +138,7 @@ export const groups: Group[] = [
         id: "B6",
         date: "2026-06-24",
         time: "20:00",
-        team1: "playoff_a",
+        team1: "playoff_europe_a",
         team2: "qatar",
         stadium: "lumen",
       },
@@ -202,7 +202,7 @@ export const groups: Group[] = [
   {
     id: "D",
     name: "D조",
-    countries: ["usa", "paraguay", "australia", "playoff_c"], // 미국, 파라과이, 호주, 플레이오프 C 승자
+    countries: ["usa", "paraguay", "australia", "playoff_europe_c"], // 미국, 파라과이, 호주, 유럽 플레이오프 C조 승자
     matches: [
       {
         id: "D1",
@@ -217,7 +217,7 @@ export const groups: Group[] = [
         date: "2026-06-15",
         time: "14:00",
         team1: "australia",
-        team2: "playoff_c",
+        team2: "playoff_europe_c",
         stadium: "sofi",
       },
       {
@@ -233,7 +233,7 @@ export const groups: Group[] = [
         date: "2026-06-21",
         time: "20:00",
         team1: "paraguay",
-        team2: "playoff_c",
+        team2: "playoff_europe_c",
         stadium: "arrowhead",
       },
       {
@@ -241,7 +241,7 @@ export const groups: Group[] = [
         date: "2026-06-26",
         time: "20:00",
         team1: "usa",
-        team2: "playoff_c",
+        team2: "playoff_europe_c",
         stadium: "lincoln",
       },
       {
@@ -312,7 +312,7 @@ export const groups: Group[] = [
   {
     id: "F",
     name: "F조",
-    countries: ["netherlands", "japan", "playoff_b", "tunisia"], // 네덜란드, 일본, 플레이오프 B 승자, 튀니지
+    countries: ["netherlands", "japan", "playoff_europe_b", "tunisia"], // 네덜란드, 일본, 유럽 플레이오프 B조 승자, 튀니지
     matches: [
       {
         id: "F1",
@@ -326,7 +326,7 @@ export const groups: Group[] = [
         id: "F2",
         date: "2026-06-17",
         time: "14:00",
-        team1: "playoff_b",
+        team1: "playoff_europe_b",
         team2: "tunisia",
         stadium: "att",
       },
@@ -335,7 +335,7 @@ export const groups: Group[] = [
         date: "2026-06-22",
         time: "17:00",
         team1: "netherlands",
-        team2: "playoff_b",
+        team2: "playoff_europe_b",
         stadium: "metlife",
       },
       {
@@ -359,7 +359,7 @@ export const groups: Group[] = [
         date: "2026-06-28",
         time: "20:00",
         team1: "japan",
-        team2: "playoff_b",
+        team2: "playoff_europe_b",
         stadium: "lincoln",
       },
     ],
@@ -477,7 +477,7 @@ export const groups: Group[] = [
   {
     id: "I",
     name: "I조",
-    countries: ["france", "senegal", "playoff_2", "norway"], // 프랑스, 세네갈, 플레이오프 2 승자, 노르웨이
+    countries: ["france", "senegal", "playoff_fifa_2", "norway"], // 프랑스, 세네갈, FIFA 플레이오프 2조 승자, 노르웨이
     matches: [
       {
         id: "I1",
@@ -491,7 +491,7 @@ export const groups: Group[] = [
         id: "I2",
         date: "2026-06-20",
         time: "14:00",
-        team1: "playoff_2",
+        team1: "playoff_fifa_2",
         team2: "norway",
         stadium: "lincoln",
       },
@@ -500,7 +500,7 @@ export const groups: Group[] = [
         date: "2026-06-25",
         time: "17:00",
         team1: "france",
-        team2: "playoff_2",
+        team2: "playoff_fifa_2",
         stadium: "metlife",
       },
       {
@@ -524,7 +524,7 @@ export const groups: Group[] = [
         date: "2026-07-01",
         time: "20:00",
         team1: "senegal",
-        team2: "playoff_2",
+        team2: "playoff_fifa_2",
         stadium: "att",
       },
     ],
@@ -587,14 +587,14 @@ export const groups: Group[] = [
   {
     id: "K",
     name: "K조",
-    countries: ["portugal", "playoff_1", "uzbekistan", "colombia"], // 포르투갈, 플레이오프 1 승자, 우즈베키스탄, 콜롬비아
+    countries: ["portugal", "playoff_fifa_1", "uzbekistan", "colombia"], // 포르투갈, FIFA 플레이오프 1조 승자, 우즈베키스탄, 콜롬비아
     matches: [
       {
         id: "K1",
         date: "2026-06-21",
         time: "20:00",
         team1: "portugal",
-        team2: "playoff_1",
+        team2: "playoff_fifa_1",
         stadium: "levis",
       },
       {
@@ -617,7 +617,7 @@ export const groups: Group[] = [
         id: "K4",
         date: "2026-06-28",
         time: "20:00",
-        team1: "playoff_1",
+        team1: "playoff_fifa_1",
         team2: "colombia",
         stadium: "lincoln",
       },
@@ -633,7 +633,7 @@ export const groups: Group[] = [
         id: "K6",
         date: "2026-07-03",
         time: "20:00",
-        team1: "playoff_1",
+        team1: "playoff_fifa_1",
         team2: "uzbekistan",
         stadium: "mercedes",
       },

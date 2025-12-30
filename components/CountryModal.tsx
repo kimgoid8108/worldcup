@@ -15,6 +15,7 @@ import { Country, getCountryById } from "@/data/countries";
 import { getPlayersByCountry, Player } from "@/data/players";
 import { getFifaRanking, getFifaRank } from "@/data/fifaRankings";
 import PlayerModal from "./PlayerModal";
+import Flag from "./Flag";
 
 interface CountryModalProps {
   countryId: string | null;
@@ -103,7 +104,7 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
             {/* 헤더: 국가 정보 및 닫기 버튼 */}
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-4">
-                <span className="text-6xl">{country.flag}</span>
+                <Flag country={country} size="xl" />
                 <div>
                   <h2 className="text-3xl font-bold text-gray-800">{country.name}</h2>
                   <p className="text-gray-600">{country.code}</p>

@@ -16,6 +16,7 @@ import { getCountryById } from "@/data/countries";
 import { getFifaRanking, getFifaRank } from "@/data/fifaRankings";
 import { getPlayersByCountry } from "@/data/players";
 import CountryModal from "./CountryModal";
+import Flag from "./Flag";
 
 export default function PotsTab() {
   // 선택된 국가 ID (국가 모달 표시용)
@@ -29,22 +30,60 @@ export default function PotsTab() {
    * 플레이오프 승자 ID를 한글 이름으로 변환
    */
   const getPlayoffName = (playoffId: string): string => {
-    if (playoffId.startsWith("playoff_europe")) {
-      return "유럽 플레이오프 승자";
-    }
-    if (playoffId.startsWith("playoff_intercontinental")) {
-      return "인터콘티넨털 플레이오프 승자";
-    }
-    if (playoffId.startsWith("playoff_a")) {
-      return "플레이오프 A 승자";
-    }
-    if (playoffId.startsWith("playoff_b")) {
-      return "플레이오프 B 승자";
-    }
-    if (playoffId.startsWith("playoff_c")) {
-      return "플레이오프 C 승자";
-    }
-    return "플레이오프 승자";
+    const playoffNames: Record<string, string> = {
+      playoff_europe_d: "유럽 플레이오프 D조 승자",
+      playoff_europe_a: "유럽 플레이오프 A조 승자",
+      playoff_europe_c: "유럽 플레이오프 C조 승자",
+      playoff_europe_b: "유럽 플레이오프 B조 승자",
+      playoff_fifa_1: "FIFA 플레이오프 1조 승자",
+      playoff_fifa_2: "FIFA 플레이오프 2조 승자",
+      playoff_intercontinental_1: "인터콘티넨털 플레이오프 1조 승자",
+      playoff_intercontinental_2: "인터콘티넨털 플레이오프 2조 승자",
+      // 하위 호환성
+      playoff_europe: "유럽 플레이오프 승자",
+      playoff_a: "플레이오프 A 승자",
+      playoff_b: "플레이오프 B 승자",
+      playoff_c: "플레이오프 C 승자",
+      playoff_1: "플레이오프 1 승자",
+      playoff_2: "플레이오프 2 승자",
+    };
+    return playoffNames[playoffId] || "플레이오프 승자";
+  };
+
+  /**
+   * 플레이오프에 참가하는 국가 목록 조회
+   */
+  const getPlayoffParticipants = (playoffId: string): string[] => {
+    // pots.ts의 플레이오프 ID를 실제 플레이오프 ID로 매핑
+    const playoffIdMap: Record<string, string> = {
+      playoff_europe_1: "playoff_europe_d",
+      playoff_europe_2: "playoff_europe_a",
+      playoff_europe_3: "playoff_europe_c",
+      playoff_europe_4: "playoff_europe_b",
+      playoff_intercontinental_1: "playoff_fifa_1",
+      playoff_intercontinental_2: "playoff_fifa_2",
+    };
+
+    const actualPlayoffId = playoffIdMap[playoffId] || playoffId;
+
+    const participants: Record<string, string[]> = {
+      // 유럽 플레이오프
+      playoff_europe_d: ["denmark", "northmacedonia", "czechrepublic", "ireland"],
+      playoff_europe_a: ["italy", "northernireland", "wales", "bosnia"],
+      playoff_europe_c: ["turkey", "romania", "slovakia", "kosovo"],
+      playoff_europe_b: ["ukraine", "sweden", "poland", "albania"],
+      // FIFA 플레이오프
+      playoff_fifa_2: ["bolivia", "suriname", "iraq"],
+      playoff_fifa_1: ["newcaledonia", "jamaica", "congodr"],
+      // 하위 호환성
+      playoff_europe: ["scotland", "norway", "sweden", "denmark", "poland", "turkey"],
+      playoff_a: ["ghana", "capeverde", "ivorycoast", "algeria"],
+      playoff_b: ["uzbekistan", "jordan", "thailand", "vietnam"],
+      playoff_c: ["newzealand", "panama", "jamaica", "costa"],
+      playoff_1: ["china", "india", "saudiarabia", "uae"],
+      playoff_2: ["russia", "iran", "qatar", "egypt"],
+    };
+    return participants[actualPlayoffId] || [];
   };
 
   /**
@@ -99,7 +138,7 @@ export default function PotsTab() {
       {/* 국가 상세 정보 모달 */}
       <CountryModal countryId={selectedCountry} onClose={() => setSelectedCountry(null)} />
 
-      <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+      <div id="pots-content" className="bg-white rounded-lg shadow-lg p-4 md:p-6">
         <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">
           포트별 팀 정보
         </h2>
@@ -162,7 +201,51 @@ export default function PotsTab() {
                     const country = getCountryById(teamId);
 
                     if (!country) {
-                      // 플레이오프 승자
+                      // 플레이오프 승자 - 유럽 플레이오프는 참가국들을 표시
+                      const participants = getPlayoffParticipants(teamId);
+
+                      // 유럽 플레이오프인 경우 참가국들을 표시
+                      if ((teamId.startsWith("playoff_europe") || teamId.startsWith("playoff_intercontinental")) && participants.length > 0) {
+                        return (
+                          <div
+                            key={`${pot.id}-${teamId}-${index}`}
+                            className="col-span-full"
+                          >
+                            <div className="mb-2 text-sm font-semibold text-gray-700">
+                              {getPlayoffName(teamId)} 참가국:
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              {participants.map((participantId) => {
+                                const participantCountry = getCountryById(participantId);
+                                if (!participantCountry) return null;
+
+                                const fifaRanking = getFifaRanking(participantId);
+                                const fifaRank = getFifaRank(participantId);
+
+                                return (
+                                  <button
+                                    key={participantId}
+                                    onClick={() => setSelectedCountry(participantId)}
+                                    className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col items-center justify-center gap-2"
+                                  >
+                                    <Flag country={participantCountry} size="lg" />
+                                    <span className="text-sm font-semibold text-gray-800 text-center">
+                                      {participantCountry.name}
+                                    </span>
+                                    {fifaRanking && (
+                                      <span className="text-xs text-gray-600 text-center">
+                                        FIFA 랭킹: {fifaRank}위 ({fifaRanking}점)
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // 다른 플레이오프는 기존대로 표시
                       return (
                         <div
                           key={`${pot.id}-${index}`}
@@ -183,14 +266,14 @@ export default function PotsTab() {
                       <button
                         key={country.id}
                         onClick={() => setSelectedCountry(country.id)}
-                        className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col items-center gap-2 relative group"
+                        className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col items-center justify-center gap-2 relative group"
                       >
-                        <span className="text-3xl">{country.flag}</span>
-                        <span className="text-sm font-semibold text-gray-800">
+                        <Flag country={country} size="lg" />
+                        <span className="text-sm font-semibold text-gray-800 text-center">
                           {country.name}
                         </span>
                         {fifaRanking && (
-                          <span className="text-xs text-gray-600">
+                          <span className="text-xs text-gray-600 text-center">
                             FIFA 랭킹: {fifaRank}위 ({fifaRanking}점)
                           </span>
                         )}

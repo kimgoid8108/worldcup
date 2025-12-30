@@ -15,6 +15,7 @@
 import { useState } from "react";
 import { pots } from "@/data/pots";
 import { getCountryById } from "@/data/countries";
+import Flag from "./Flag";
 
 export default function PotInfo() {
   const [selectedPot, setSelectedPot] = useState<number | null>(null);
@@ -91,10 +92,10 @@ export default function PotInfo() {
                   return (
                     <div
                       key={country.id}
-                      className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 flex flex-col items-center gap-2"
+                      className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 flex flex-col items-center justify-center gap-2"
                     >
-                      <span className="text-3xl">{country.flag}</span>
-                      <span className="text-sm font-semibold text-gray-800">{country.name}</span>
+                      <Flag country={country} size="lg" />
+                      <span className="text-sm font-semibold text-gray-800 text-center">{country.name}</span>
                     </div>
                   );
                 })}
@@ -118,8 +119,8 @@ export default function PotInfo() {
                   const country = getCountryById(teamId);
                   if (country) {
                     return (
-                      <span key={index} className="text-lg" title={country.name}>
-                        {country.flag}
+                      <span key={index} title={country.name}>
+                        <Flag country={country} size="sm" />
                       </span>
                     );
                   }

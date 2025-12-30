@@ -90,7 +90,7 @@ export default function StadiumsTab() {
         </div>
 
         {/* 지도 섹션 */}
-        <div className="mb-8">
+        <div id="stadium-map" className="mb-8">
           <div className="bg-gray-50 rounded-lg shadow-md p-4 md:p-6 mb-6">
             <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-800">
               경기장 지도
@@ -110,7 +110,7 @@ export default function StadiumsTab() {
         </div>
 
         {/* 경기장 목록 섹션 */}
-        <div>
+        <div id="stadium-list">
           <p className="text-center text-gray-600 mb-6">
             총 {stadiums.length}개 경기장
             {searchQuery && ` (검색 결과: ${Object.values(groupedStadiums).flat().length}개)`}
