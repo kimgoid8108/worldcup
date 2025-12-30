@@ -34,24 +34,24 @@ export const countries: Country[] = [
   { id: "brazil", name: "브라질", code: "BRA", flag: "🇧🇷", latitude: -15.7942, longitude: -47.8822 }, // 브라질리아
   { id: "argentina", name: "아르헨티나", code: "ARG", flag: "🇦🇷", latitude: -34.6037, longitude: -58.3816 }, // 부에노스아이레스
   { id: "france", name: "프랑스", code: "FRA", flag: "🇫🇷", latitude: 48.8566, longitude: 2.3522 }, // 파리
-  { id: "england", name: "잉글랜드", code: "ENG", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", latitude: 51.5074, longitude: -0.1278 }, // 런던
+  { id: "england", name: "잉글랜드", code: "ENG", flag: "🏴", latitude: 51.5074, longitude: -0.1278 }, // 런던
   { id: "spain", name: "스페인", code: "ESP", flag: "🇪🇸", latitude: 40.4168, longitude: -3.7038 }, // 마드리드
-  { id: "germany", name: "독일", code: "GER", flag: "🇩🇪", latitude: 52.5200, longitude: 13.4050 }, // 베를린
+  { id: "germany", name: "독일", code: "GER", flag: "🇩🇪", latitude: 52.52, longitude: 13.405 }, // 베를린
   { id: "italy", name: "이탈리아", code: "ITA", flag: "🇮🇹", latitude: 41.9028, longitude: 12.4964 }, // 로마
   { id: "portugal", name: "포르투갈", code: "POR", flag: "🇵🇹", latitude: 38.7223, longitude: -9.1393 }, // 리스본
   { id: "netherlands", name: "네덜란드", code: "NED", flag: "🇳🇱", latitude: 52.3676, longitude: 4.9041 }, // 암스테르담
   { id: "japan", name: "일본", code: "JPN", flag: "🇯🇵", latitude: 35.6762, longitude: 139.6503 }, // 도쿄
-  { id: "southkorea", name: "대한민국", code: "KOR", flag: "🇰🇷", latitude: 37.5665, longitude: 126.9780 }, // 서울
+  { id: "southkorea", name: "대한민국", code: "KOR", flag: "🇰🇷", latitude: 37.5665, longitude: 126.978 }, // 서울
   { id: "morocco", name: "모로코", code: "MAR", flag: "🇲🇦", latitude: 34.0209, longitude: -6.8416 }, // 라바트
   { id: "senegal", name: "세네갈", code: "SEN", flag: "🇸🇳", latitude: 14.7167, longitude: -17.4677 }, // 다카르
   { id: "egypt", name: "이집트", code: "EGY", flag: "🇪🇬", latitude: 30.0444, longitude: 31.2357 }, // 카이로
-  { id: "australia", name: "호주", code: "AUS", flag: "🇦🇺", latitude: -35.2809, longitude: 149.1300 }, // 캔버라
+  { id: "australia", name: "호주", code: "AUS", flag: "🇦🇺", latitude: -35.2809, longitude: 149.13 }, // 캔버라
   { id: "uruguay", name: "우루과이", code: "URU", flag: "🇺🇾", latitude: -34.9011, longitude: -56.1645 }, // 몬테비데오
-  { id: "colombia", name: "콜롬비아", code: "COL", flag: "🇨🇴", latitude: 4.7110, longitude: -74.0721 }, // 보고타
+  { id: "colombia", name: "콜롬비아", code: "COL", flag: "🇨🇴", latitude: 4.711, longitude: -74.0721 }, // 보고타
   { id: "chile", name: "칠레", code: "CHI", flag: "🇨🇱", latitude: -33.4489, longitude: -70.6693 }, // 산티아고
   { id: "peru", name: "페루", code: "PER", flag: "🇵🇪", latitude: -12.0464, longitude: -77.0428 }, // 리마
   { id: "ecuador", name: "에콰도르", code: "ECU", flag: "🇪🇨", latitude: -0.1807, longitude: -78.4678 }, // 키토
-  { id: "croatia", name: "크로아티아", code: "CRO", flag: "🇭🇷", latitude: 45.8150, longitude: 15.9819 }, // 자그레브
+  { id: "croatia", name: "크로아티아", code: "CRO", flag: "🇭🇷", latitude: 45.815, longitude: 15.9819 }, // 자그레브
   { id: "belgium", name: "벨기에", code: "BEL", flag: "🇧🇪", latitude: 50.8503, longitude: 4.3517 }, // 브뤼셀
   { id: "switzerland", name: "스위스", code: "SUI", flag: "🇨🇭", latitude: 46.9481, longitude: 7.4474 }, // 베른
   { id: "denmark", name: "덴마크", code: "DEN", flag: "🇩🇰", latitude: 55.6761, longitude: 12.5683 }, // 코펜하겐
@@ -60,12 +60,12 @@ export const countries: Country[] = [
   { id: "norway", name: "노르웨이", code: "NOR", flag: "🇳🇴", latitude: 59.9139, longitude: 10.7522 }, // 오슬로
   { id: "russia", name: "러시아", code: "RUS", flag: "🇷🇺", latitude: 55.7558, longitude: 37.6173 }, // 모스크바
   { id: "turkey", name: "터키", code: "TUR", flag: "🇹🇷", latitude: 39.9334, longitude: 32.8597 }, // 앙카라
-  { id: "iran", name: "이란", code: "IRN", flag: "🇮🇷", latitude: 35.6892, longitude: 51.3890 }, // 테헤란
+  { id: "iran", name: "이란", code: "IRN", flag: "🇮🇷", latitude: 35.6892, longitude: 51.389 }, // 테헤란
   { id: "saudiarabia", name: "사우디아라비아", code: "KSA", flag: "🇸🇦", latitude: 24.7136, longitude: 46.6753 }, // 리야드
-  { id: "qatar", name: "카타르", code: "QAT", flag: "🇶🇦", latitude: 25.2854, longitude: 51.5310 }, // 도하
+  { id: "qatar", name: "카타르", code: "QAT", flag: "🇶🇦", latitude: 25.2854, longitude: 51.531 }, // 도하
   { id: "uae", name: "아랍에미리트", code: "UAE", flag: "🇦🇪", latitude: 24.4539, longitude: 54.3773 }, // 아부다비
   { id: "china", name: "중국", code: "CHN", flag: "🇨🇳", latitude: 39.9042, longitude: 116.4074 }, // 베이징
-  { id: "india", name: "인도", code: "IND", flag: "🇮🇳", latitude: 28.6139, longitude: 77.2090 }, // 뉴델리
+  { id: "india", name: "인도", code: "IND", flag: "🇮🇳", latitude: 28.6139, longitude: 77.209 }, // 뉴델리
   { id: "thailand", name: "태국", code: "THA", flag: "🇹🇭", latitude: 13.7563, longitude: 100.5018 }, // 방콕
   { id: "vietnam", name: "베트남", code: "VIE", flag: "🇻🇳", latitude: 21.0285, longitude: 105.8542 }, // 하노이
   { id: "newzealand", name: "뉴질랜드", code: "NZL", flag: "🇳🇿", latitude: -41.2865, longitude: 174.7762 }, // 웰링턴
@@ -74,7 +74,7 @@ export const countries: Country[] = [
   { id: "jamaica", name: "자메이카", code: "JAM", flag: "🇯🇲", latitude: 18.0179, longitude: -76.8099 }, // 킹스턴
   { id: "southafrica", name: "남아프리카공화국", code: "RSA", flag: "🇿🇦", latitude: -25.7479, longitude: 28.2293 }, // 프리토리아
   { id: "haiti", name: "아이티", code: "HAI", flag: "🇭🇹", latitude: 18.5944, longitude: -72.3074 }, // 포르토프랭스
-  { id: "scotland", name: "스코틀랜드", code: "SCO", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", latitude: 55.9533, longitude: -3.1883 }, // 에딘버러
+  { id: "scotland", name: "스코틀랜드", code: "SCO", flag: "🏴", latitude: 55.9533, longitude: -3.1883 }, // 에딘버러
   { id: "paraguay", name: "파라과이", code: "PAR", flag: "🇵🇾", latitude: -25.2637, longitude: -57.5759 }, // 아순시온
   { id: "curacao", name: "퀴라소", code: "CUW", flag: "🇨🇼", latitude: 12.1091, longitude: -68.9317 }, // 빌렘스타드
   { id: "ivorycoast", name: "코트디부아르", code: "CIV", flag: "🇨🇮", latitude: 6.8276, longitude: -5.2893 }, // 야무수크로
@@ -83,8 +83,8 @@ export const countries: Country[] = [
   { id: "austria", name: "오스트리아", code: "AUT", flag: "🇦🇹", latitude: 48.2082, longitude: 16.3738 }, // 빈
   { id: "jordan", name: "요르단", code: "JOR", flag: "🇯🇴", latitude: 31.9539, longitude: 35.9106 }, // 암만
   { id: "uzbekistan", name: "우즈베키스탄", code: "UZB", flag: "🇺🇿", latitude: 41.2995, longitude: 69.2401 }, // 타슈켄트
-  { id: "ghana", name: "가나", code: "GHA", flag: "🇬🇭", latitude: 5.6037, longitude: -0.1870 }, // 아크라
-  { id: "capeverde", name: "카보베르데", code: "CPV", flag: "🇨🇻", latitude: 14.9330, longitude: -23.5133 }, // 프라이아
+  { id: "ghana", name: "가나", code: "GHA", flag: "🇬🇭", latitude: 5.6037, longitude: -0.187 }, // 아크라
+  { id: "capeverde", name: "카보베르데", code: "CPV", flag: "🇨🇻", latitude: 14.933, longitude: -23.5133 }, // 프라이아
 ];
 
 /**

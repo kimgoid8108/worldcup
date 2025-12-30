@@ -106,9 +106,14 @@ export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) 
           {/* 헤더: 경기장 이름 및 닫기 버튼 */}
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-1">{stadium.name}</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">
+                {stadium.name}
+              </h2>
               <p className="text-gray-600">
                 {stadium.city}, {stadium.country}
+              </p>
+              <p className="text-sm text-blue-600 font-semibold mt-1">
+                수용 인원: {stadium.capacity.toLocaleString()}명
               </p>
             </div>
             <button
@@ -125,7 +130,9 @@ export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) 
 
           {/* 3D 경기장 뷰어 섹션 */}
           <div className="mt-6">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800">3D 경기장 뷰어</h3>
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">
+              3D 경기장 뷰어
+            </h3>
             <StadiumViewer modelId={stadium.sketchfabModelId} author={stadium.author} />
           </div>
         </div>
