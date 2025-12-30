@@ -20,9 +20,11 @@ import Tabs from "@/components/Tabs";
 import PotsTab from "@/components/PotsTab";
 import GroupsTab from "@/components/GroupsTab";
 import StadiumsTab from "@/components/StadiumsTab";
+import FifaRankingsTab from "@/components/FifaRankingsTab";
 import { countries } from "@/data/countries";
 import { stadiums } from "@/data/stadiums";
 import { groups } from "@/data/groups";
+import Flag from "@/components/Flag";
 
 // 상수 정의
 const HOST_NATIONS = [
@@ -33,17 +35,20 @@ const HOST_NATIONS = [
 
 const TITLE_STYLE = {
   fontFamily: "'Arial Black', sans-serif",
-  textShadow: "0 0 40px rgba(255, 215, 0, 0.5), 0 0 80px rgba(255, 215, 0, 0.3)",
+  textShadow:
+    "0 0 40px rgba(255, 215, 0, 0.5), 0 0 80px rgba(255, 215, 0, 0.3)",
   letterSpacing: "-0.02em",
 } as const;
 
 const NATION_NAME_STYLE = {
-  textShadow: "0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3)",
+  textShadow:
+    "0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3)",
   fontFamily: "'Arial Black', sans-serif",
 } as const;
 
 const BUTTON_STYLE = {
-  boxShadow: "0 0 30px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.2)",
+  boxShadow:
+    "0 0 30px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.2)",
 } as const;
 
 // 애니메이션 설정
@@ -61,7 +66,9 @@ const FLAG_TRANSITION = {
 export default function Home() {
   // hydration 에러 방지를 위해 초기값을 null로 설정
   const [showIntro, setShowIntro] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<"pots" | "groups" | "stadiums">("groups");
+  const [activeTab, setActiveTab] = useState<
+    "pots" | "groups" | "stadiums" | "fifarankings"
+  >("groups");
 
   const introVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -92,11 +99,16 @@ export default function Home() {
     };
 
     introVideoRef.current.addEventListener("error", handleError);
-    return () => introVideoRef.current?.removeEventListener("error", handleError);
+    return () =>
+      introVideoRef.current?.removeEventListener("error", handleError);
   }, []);
 
   // 계산된 값 메모이제이션
-  const statsText = useMemo(() => `Road to 2026: ${countries.length} Nations | ${stadiums.length} Host Cities`, []);
+  const statsText = useMemo(
+    () =>
+      `Road to 2026: ${countries.length} Nations | ${stadiums.length} Host Cities`,
+    []
+  );
 
   // hydration 완료 전에는 아무것도 렌더링하지 않음 (hydration 에러 방지)
   if (showIntro === null) {
@@ -107,11 +119,24 @@ export default function Home() {
     <>
       <AnimatePresence>
         {showIntro ? (
-          <motion.div key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-50 bg-black">
+          <motion.div
+            key="intro"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            className="fixed inset-0 z-50 bg-black"
+          >
             {/* Phase 1: The Preparation (introvideo) */}
             <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
               {/* 배경 비디오 */}
-              <video ref={introVideoRef} autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60">
+              <video
+                ref={introVideoRef}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover opacity-60"
+              >
                 <source src="/videos/introvideo.mp4" type="video/mp4" />
               </video>
 
@@ -126,7 +151,8 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 1.2, delay: 0.5 }}
                   className="text-6xl md:text-8xl lg:text-9xl font-black text-white mb-8 tracking-tight"
-                  style={TITLE_STYLE}>
+                  style={TITLE_STYLE}
+                >
                   BEYOND
                   <br />
                   THE LIMITS
@@ -137,7 +163,8 @@ export default function Home() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 1, delay: 1.2 }}
-                  className="text-xl md:text-2xl text-gray-300 mb-12 font-light tracking-wider">
+                  className="text-xl md:text-2xl text-gray-300 mb-12 font-light tracking-wider"
+                >
                   {statsText}
                 </motion.div>
 
@@ -150,7 +177,8 @@ export default function Home() {
                   whileTap={{ scale: 0.95 }}
                   onClick={handleSkipIntro}
                   className="px-12 py-4 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bold text-lg md:text-xl rounded-full shadow-2xl hover:shadow-yellow-500/50 transition-all duration-300 uppercase tracking-wider"
-                  style={BUTTON_STYLE}>
+                  style={BUTTON_STYLE}
+                >
                   NEXT
                 </motion.button>
               </div>
@@ -163,8 +191,69 @@ export default function Home() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="max-w-7xl mx-auto">
+            className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 relative overflow-hidden"
+          >
+            {/* 배경 국기 애니메이션 - 양쪽 사이드만 */}
+            <div className="fixed inset-0 z-0 pointer-events-none opacity-50">
+              {/* 왼쪽 사이드 */}
+              <div className="absolute top-0 left-4 md:left-8 lg:left-12 h-full w-24 md:w-32">
+                <motion.div
+                  className="flex flex-col gap-12 items-center"
+                  animate={{
+                    y: [0, -2000],
+                  }}
+                  transition={{
+                    duration: 35,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                >
+                  {/* 국기들을 두 번 반복하여 무한 스크롤 효과 */}
+                  {[...countries, ...countries].map((country, index) => (
+                    <motion.div
+                      key={`left-${country.id}-${index}`}
+                      className="flex-shrink-0"
+                      whileHover={{ scale: 1.2 }}
+                    >
+                      <Flag country={country} size="xl" />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
+
+              {/* 오른쪽 사이드 */}
+              <div className="absolute top-0 right-4 md:right-8 lg:right-12 h-full w-24 md:w-32">
+                <motion.div
+                  className="flex flex-col gap-12 items-center"
+                  animate={{
+                    y: [-2000, 0],
+                  }}
+                  transition={{
+                    duration: 40,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                >
+                  {/* 국기들을 두 번 반복하여 무한 스크롤 효과 */}
+                  {[...countries, ...countries].map((country, index) => (
+                    <motion.div
+                      key={`right-${country.id}-${index}`}
+                      className="flex-shrink-0"
+                      whileHover={{ scale: 1.2 }}
+                    >
+                      <Flag country={country} size="xl" />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="max-w-7xl mx-auto relative z-10"
+            >
               {/* Hero 섹션 */}
               <section className="p-4 md:p-8 pt-8 md:pt-12 pb-12 md:pb-16">
                 <div className="text-center mb-8">
@@ -172,7 +261,8 @@ export default function Home() {
                     2026 북중미 월드컵 경기장 & 데이터 플랫폼
                   </h1>
                   <p className="text-lg md:text-xl text-gray-600 mb-8">
-                    경기장, 국가, 선수 정보를 지도와 3D 모델로 한눈에 확인하세요.
+                    경기장, 국가, 선수 정보를 지도와 3D 모델로 한눈에
+                    확인하세요.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
                     <Link
@@ -181,9 +271,13 @@ export default function Home() {
                         e.preventDefault();
                         setActiveTab("groups");
                         setTimeout(() => {
-                          const element = document.getElementById("match-schedule");
+                          const element =
+                            document.getElementById("match-schedule");
                           if (element) {
-                            element.scrollIntoView({ behavior: "smooth", block: "start" });
+                            element.scrollIntoView({
+                              behavior: "smooth",
+                              block: "start",
+                            });
                           } else {
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }
@@ -199,9 +293,13 @@ export default function Home() {
                         e.preventDefault();
                         setActiveTab("stadiums");
                         setTimeout(() => {
-                          const element = document.getElementById("stadium-map");
+                          const element =
+                            document.getElementById("stadium-map");
                           if (element) {
-                            element.scrollIntoView({ behavior: "smooth", block: "start" });
+                            element.scrollIntoView({
+                              behavior: "smooth",
+                              block: "start",
+                            });
                           }
                         }, 100);
                       }}
@@ -215,9 +313,13 @@ export default function Home() {
                         e.preventDefault();
                         setActiveTab("stadiums");
                         setTimeout(() => {
-                          const element = document.getElementById("stadium-list");
+                          const element =
+                            document.getElementById("stadium-list");
                           if (element) {
-                            element.scrollIntoView({ behavior: "smooth", block: "start" });
+                            element.scrollIntoView({
+                              behavior: "smooth",
+                              block: "start",
+                            });
                           }
                         }, 100);
                       }}
@@ -231,9 +333,13 @@ export default function Home() {
                         e.preventDefault();
                         setActiveTab("pots");
                         setTimeout(() => {
-                          const element = document.getElementById("pots-content");
+                          const element =
+                            document.getElementById("pots-content");
                           if (element) {
-                            element.scrollIntoView({ behavior: "smooth", block: "start" });
+                            element.scrollIntoView({
+                              behavior: "smooth",
+                              block: "start",
+                            });
                           } else {
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }
@@ -252,11 +358,15 @@ export default function Home() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white rounded-lg shadow-md p-6 text-center">
                     <h3 className="text-sm text-gray-600 mb-2">개최국</h3>
-                    <p className="text-base font-semibold text-gray-800">미국 · 캐나다 · 멕시코</p>
+                    <p className="text-base font-semibold text-gray-800">
+                      미국 · 캐나다 · 멕시코
+                    </p>
                   </div>
                   <div className="bg-white rounded-lg shadow-md p-6 text-center">
                     <h3 className="text-sm text-gray-600 mb-2">경기장 수</h3>
-                    <p className="text-2xl font-bold text-gray-800">{stadiums.length}+</p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {stadiums.length}+
+                    </p>
                   </div>
                   <div className="bg-white rounded-lg shadow-md p-6 text-center">
                     <h3 className="text-sm text-gray-600 mb-2">참가국</h3>
@@ -264,14 +374,18 @@ export default function Home() {
                   </div>
                   <div className="bg-white rounded-lg shadow-md p-6 text-center">
                     <h3 className="text-sm text-gray-600 mb-2">대회 시작</h3>
-                    <p className="text-base font-semibold text-gray-800">2026년 6월</p>
+                    <p className="text-base font-semibold text-gray-800">
+                      2026년 6월
+                    </p>
                   </div>
                 </div>
               </section>
 
               {/* 주요 경기장 하이라이트 */}
               <section className="px-4 md:px-8 mb-12 md:mb-16">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">주요 경기장</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">
+                  주요 경기장
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {stadiums
                     .filter((s) => s.sketchfabModelId)
@@ -282,47 +396,55 @@ export default function Home() {
                         href={`/stadiums/${stadium.id}`}
                         className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-6"
                       >
-                        <h3 className="text-xl font-semibold text-gray-800 mb-2">{stadium.name}</h3>
-                        <p className="text-gray-600 text-sm mb-2">{stadium.city}, {stadium.country}</p>
-                        <p className="text-gray-500 text-xs">수용 인원: {stadium.capacity.toLocaleString()}명</p>
+                        <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                          {stadium.name}
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-2">
+                          {stadium.city}, {stadium.country}
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          수용 인원: {stadium.capacity.toLocaleString()}명
+                        </p>
                       </Link>
                     ))}
                 </div>
               </section>
 
-              {/* 지도 미리보기 섹션 */}
-              <section className="px-4 md:px-8 mb-12 md:mb-16">
-                <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">경기장 위치를 지도로 보기</h2>
-                  <p className="text-gray-600 mb-6">북중미 지역의 모든 경기장 위치를 한눈에 확인하세요.</p>
-                  <button
-                    onClick={() => {
-                      setActiveTab("stadiums");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                  >
-                    경기장 지도 보기
-                  </button>
-                </div>
-              </section>
-
               {/* 기존 탭 네비게이션 및 콘텐츠 */}
               <section className="p-4 md:p-8">
-              {/* 헤더: 제목 */}
-              <div className="flex justify-center items-center mb-6 md:mb-8">
-                <h1 className="text-2xl md:text-4xl font-bold text-gray-800">2026 북중미 월드컵</h1>
-              </div>
+                {/* 헤더: 제목 */}
+                <div className="flex justify-center items-center mb-6 md:mb-8">
+                  <h1 className="text-2xl md:text-4xl font-bold text-gray-800">
+                    2026 북중미 월드컵
+                  </h1>
+                </div>
 
-              {/* 탭 네비게이션 */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.5 }}>
-                <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
-              </motion.div>
+                {/* 탭 네비게이션 */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.5 }}
+                >
+                  <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
+                </motion.div>
 
-              {/* 탭별 컨텐츠 */}
-              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.7 }} className="mt-6">
-                {activeTab === "pots" ? <PotsTab /> : activeTab === "groups" ? <GroupsTab /> : <StadiumsTab />}
-              </motion.div>
+                {/* 탭별 컨텐츠 */}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.7 }}
+                  className="mt-6"
+                >
+                  {activeTab === "pots" ? (
+                    <PotsTab />
+                  ) : activeTab === "groups" ? (
+                    <GroupsTab />
+                  ) : activeTab === "stadiums" ? (
+                    <StadiumsTab />
+                  ) : (
+                    <FifaRankingsTab />
+                  )}
+                </motion.div>
               </section>
 
               {/* Footer */}

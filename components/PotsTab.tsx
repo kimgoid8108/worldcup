@@ -13,7 +13,6 @@
 import { useState, useMemo } from "react";
 import { pots } from "@/data/pots";
 import { getCountryById } from "@/data/countries";
-import { getFifaRanking, getFifaRank } from "@/data/fifaRankings";
 import { getPlayersByCountry } from "@/data/players";
 import CountryModal from "./CountryModal";
 import Flag from "./Flag";
@@ -70,13 +69,13 @@ export default function PotsTab() {
       // 유럽 플레이오프
       playoff_europe_d: ["denmark", "northmacedonia", "czechrepublic", "ireland"],
       playoff_europe_a: ["italy", "northernireland", "wales", "bosnia"],
-      playoff_europe_c: ["turkey", "romania", "slovakia", "kosovo"],
+      playoff_europe_c: ["turkiye", "romania", "slovakia", "kosovo"],
       playoff_europe_b: ["ukraine", "sweden", "poland", "albania"],
       // FIFA 플레이오프
       playoff_fifa_2: ["bolivia", "suriname", "iraq"],
       playoff_fifa_1: ["newcaledonia", "jamaica", "congodr"],
       // 하위 호환성
-      playoff_europe: ["scotland", "norway", "sweden", "denmark", "poland", "turkey"],
+      playoff_europe: ["scotland", "norway", "sweden", "denmark", "poland", "turkiye"],
       playoff_a: ["ghana", "capeverde", "ivorycoast", "algeria"],
       playoff_b: ["uzbekistan", "jordan", "thailand", "vietnam"],
       playoff_c: ["newzealand", "panama", "jamaica", "costa"],
@@ -187,6 +186,7 @@ export default function PotsTab() {
 
         {/* 포트별 팀 목록 */}
         {filteredPots.length > 0 ? (
+          // 포트별 표시
           <div className="space-y-6">
             {filteredPots.map((pot) => (
               <div
@@ -219,9 +219,6 @@ export default function PotsTab() {
                                 const participantCountry = getCountryById(participantId);
                                 if (!participantCountry) return null;
 
-                                const fifaRanking = getFifaRanking(participantId);
-                                const fifaRank = getFifaRank(participantId);
-
                                 return (
                                   <button
                                     key={participantId}
@@ -232,11 +229,6 @@ export default function PotsTab() {
                                     <span className="text-sm font-semibold text-gray-800 text-center">
                                       {participantCountry.name}
                                     </span>
-                                    {fifaRanking && (
-                                      <span className="text-xs text-gray-600 text-center">
-                                        FIFA 랭킹: {fifaRank}위 ({fifaRanking}점)
-                                      </span>
-                                    )}
                                   </button>
                                 );
                               })}
@@ -258,30 +250,22 @@ export default function PotsTab() {
                       );
                     }
 
-                    // 일반 국가
-                    const fifaRanking = getFifaRanking(teamId);
-                    const fifaRank = getFifaRank(teamId);
-
-                    return (
-                      <button
-                        key={country.id}
-                        onClick={() => setSelectedCountry(country.id)}
-                        className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col items-center justify-center gap-2 relative group"
-                      >
-                        <Flag country={country} size="lg" />
-                        <span className="text-sm font-semibold text-gray-800 text-center">
-                          {country.name}
-                        </span>
-                        {fifaRanking && (
-                          <span className="text-xs text-gray-600 text-center">
-                            FIFA 랭킹: {fifaRank}위 ({fifaRanking}점)
-                          </span>
-                        )}
-                        {searchQuery && matchesSearch(country.id, searchQuery) && (
-                          <span className="absolute inset-0 border-2 border-yellow-400 rounded-lg animate-pulse" />
-                        )}
-                      </button>
-                    );
+                  // 일반 국가
+                  return (
+                    <button
+                      key={country.id}
+                      onClick={() => setSelectedCountry(country.id)}
+                      className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col items-center justify-center gap-2 relative group"
+                    >
+                      <Flag country={country} size="lg" />
+                      <span className="text-sm font-semibold text-gray-800 text-center">
+                        {country.name}
+                      </span>
+                      {searchQuery && matchesSearch(country.id, searchQuery) && (
+                        <span className="absolute inset-0 border-2 border-yellow-400 rounded-lg animate-pulse" />
+                      )}
+                    </button>
+                  );
                   })}
                 </div>
               </div>

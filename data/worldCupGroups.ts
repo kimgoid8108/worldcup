@@ -280,10 +280,10 @@ export const worldCupGroups: WorldCupGroup[] = [
     group: 'J',
     teams: [
       {
-        name: 'Turkey',
+        name: 'Turkiye',
         flag: '🇹🇷',
         players: ['Hakan Çalhanoğlu', 'Cenk Tosun', 'Uğurcan Çakır', 'Çağlar Söyüncü', 'Burak Yılmaz'],
-        countryId: 'turkey',
+        countryId: 'turkiye',
       },
       {
         name: 'United Arab Emirates',

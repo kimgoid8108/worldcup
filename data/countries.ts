@@ -50,8 +50,6 @@ export const countries: Country[] = [
   { id: "australia", name: "호주", code: "AUS", flag: "🇦🇺", flagEmoji: "🇦🇺", latitude: -35.2809, longitude: 149.13 }, // 캔버라
   { id: "uruguay", name: "우루과이", code: "URU", flag: "🇺🇾", flagEmoji: "🇺🇾", latitude: -34.9011, longitude: -56.1645 }, // 몬테비데오
   { id: "colombia", name: "콜롬비아", code: "COL", flag: "🇨🇴", flagEmoji: "🇨🇴", latitude: 4.711, longitude: -74.0721 }, // 보고타
-  { id: "chile", name: "칠레", code: "CHI", flag: "🇨🇱", flagEmoji: "🇨🇱", latitude: -33.4489, longitude: -70.6693 }, // 산티아고
-  { id: "peru", name: "페루", code: "PER", flag: "🇵🇪", flagEmoji: "🇵🇪", latitude: -12.0464, longitude: -77.0428 }, // 리마
   { id: "ecuador", name: "에콰도르", code: "ECU", flag: "🇪🇨", flagEmoji: "🇪🇨", latitude: -0.1807, longitude: -78.4678 }, // 키토
   { id: "croatia", name: "크로아티아", code: "CRO", flag: "🇭🇷", flagEmoji: "🇭🇷", latitude: 45.815, longitude: 15.9819 }, // 자그레브
   { id: "belgium", name: "벨기에", code: "BEL", flag: "🇧🇪", flagEmoji: "🇧🇪", latitude: 50.8503, longitude: 4.3517 }, // 브뤼셀
@@ -60,18 +58,11 @@ export const countries: Country[] = [
   { id: "poland", name: "폴란드", code: "POL", flag: "🇵🇱", flagEmoji: "🇵🇱", latitude: 52.2297, longitude: 21.0122 }, // 바르샤바
   { id: "sweden", name: "스웨덴", code: "SWE", flag: "🇸🇪", flagEmoji: "🇸🇪", latitude: 59.3293, longitude: 18.0686 }, // 스톡홀름
   { id: "norway", name: "노르웨이", code: "NOR", flag: "🇳🇴", flagEmoji: "🇳🇴", latitude: 59.9139, longitude: 10.7522 }, // 오슬로
-  { id: "russia", name: "러시아", code: "RUS", flag: "🇷🇺", flagEmoji: "🇷🇺", latitude: 55.7558, longitude: 37.6173 }, // 모스크바
-  { id: "turkey", name: "터키", code: "TUR", flag: "🇹🇷", flagEmoji: "🇹🇷", latitude: 39.9334, longitude: 32.8597 }, // 앙카라
+  { id: "turkiye", name: "튀르키예", code: "TUR", flag: "🇹🇷", flagEmoji: "🇹🇷", latitude: 39.9334, longitude: 32.8597 }, // 앙카라
   { id: "iran", name: "이란", code: "IRN", flag: "🇮🇷", flagEmoji: "🇮🇷", latitude: 35.6892, longitude: 51.389 }, // 테헤란
   { id: "saudiarabia", name: "사우디아라비아", code: "KSA", flag: "🇸🇦", flagEmoji: "🇸🇦", latitude: 24.7136, longitude: 46.6753 }, // 리야드
   { id: "qatar", name: "카타르", code: "QAT", flag: "🇶🇦", flagEmoji: "🇶🇦", latitude: 25.2854, longitude: 51.531 }, // 도하
-  { id: "uae", name: "아랍에미리트", code: "UAE", flag: "🇦🇪", flagEmoji: "🇦🇪", latitude: 24.4539, longitude: 54.3773 }, // 아부다비
-  { id: "china", name: "중국", code: "CHN", flag: "🇨🇳", flagEmoji: "🇨🇳", latitude: 39.9042, longitude: 116.4074 }, // 베이징
-  { id: "india", name: "인도", code: "IND", flag: "🇮🇳", flagEmoji: "🇮🇳", latitude: 28.6139, longitude: 77.209 }, // 뉴델리
-  { id: "thailand", name: "태국", code: "THA", flag: "🇹🇭", flagEmoji: "🇹🇭", latitude: 13.7563, longitude: 100.5018 }, // 방콕
-  { id: "vietnam", name: "베트남", code: "VIE", flag: "🇻🇳", flagEmoji: "🇻🇳", latitude: 21.0285, longitude: 105.8542 }, // 하노이
   { id: "newzealand", name: "뉴질랜드", code: "NZL", flag: "🇳🇿", flagEmoji: "🇳🇿", latitude: -41.2865, longitude: 174.7762 }, // 웰링턴
-  { id: "costa", name: "코스타리카", code: "CRC", flag: "🇨🇷", flagEmoji: "🇨🇷", latitude: 9.9281, longitude: -84.0907 }, // 산호세
   { id: "panama", name: "파나마", code: "PAN", flag: "🇵🇦", flagEmoji: "🇵🇦", latitude: 8.9824, longitude: -79.5199 }, // 파나마시티
   { id: "jamaica", name: "자메이카", code: "JAM", flag: "🇯🇲", flagEmoji: "🇯🇲", latitude: 18.0179, longitude: -76.8099 }, // 킹스턴
   { id: "southafrica", name: "남아프리카공화국", code: "RSA", flag: "🇿🇦", flagEmoji: "🇿🇦", latitude: -25.7479, longitude: 28.2293 }, // 프리토리아

@@ -13,15 +13,16 @@
 "use client";
 
 interface TabsProps {
-  activeTab: "pots" | "groups" | "stadiums"; // 현재 활성화된 탭
-  onTabChange: (tab: "pots" | "groups" | "stadiums") => void; // 탭 변경 핸들러
+  activeTab: "pots" | "groups" | "stadiums" | "fifarankings"; // 현재 활성화된 탭
+  onTabChange: (tab: "pots" | "groups" | "stadiums" | "fifarankings") => void; // 탭 변경 핸들러
 }
 
 export default function Tabs({ activeTab, onTabChange }: TabsProps) {
   const tabs = [
-    { id: "groups" as const, label: "조 경기" },
+    { id: "groups" as const, label: "경기 일정" },
     { id: "stadiums" as const, label: "경기장" },
     { id: "pots" as const, label: "포트" },
+    { id: "fifarankings" as const, label: "FIFA 랭킹 순위" },
   ];
 
   return (
