@@ -10,7 +10,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import ViewerInstructions from "./ViewerInstructions";
+import ViewerInstructions from "@/components/ui/ViewerInstructions";
 
 interface StadiumViewerProps {
   modelId: string; // Sketchfab 모델 ID

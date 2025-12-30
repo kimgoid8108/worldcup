@@ -8,9 +8,9 @@
 
 "use client";
 
-import PotsTab from "./PotsTab";
-import GroupsTab from "./GroupsTab";
-import StadiumsTab from "./StadiumsTab";
+import PotsTab from "@/components/tabs/PotsTab";
+import GroupsTab from "@/components/tabs/GroupsTab";
+import StadiumsTab from "@/components/tabs/StadiumsTab";
 
 interface MainContentProps {
   activeTab: "pots" | "groups" | "stadiums";

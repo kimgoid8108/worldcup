@@ -16,16 +16,16 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import Tabs from "@/components/Tabs";
-import PotsTab from "@/components/PotsTab";
-import GroupsTab from "@/components/GroupsTab";
-import StadiumsTab from "@/components/StadiumsTab";
-import StadiumModal from "@/components/StadiumModal";
-import FifaRankingsTab from "@/components/FifaRankingsTab";
+import Tabs from "@/components/tabs/Tabs";
+import PotsTab from "@/components/tabs/PotsTab";
+import GroupsTab from "@/components/tabs/GroupsTab";
+import StadiumsTab from "@/components/tabs/StadiumsTab";
+import StadiumModal from "@/components/modals/StadiumModal";
+import FifaRankingsTab from "@/components/tabs/FifaRankingsTab";
 import { countries } from "@/data/countries";
 import { stadiums } from "@/data/stadiums";
 import { groups } from "@/data/groups";
-import Flag from "@/components/Flag";
+import Flag from "@/components/ui/Flag";
 
 // 상수 정의
 const HOST_NATIONS = [

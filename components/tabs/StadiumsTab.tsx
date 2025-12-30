@@ -12,8 +12,8 @@
 
 import { useState, useMemo } from "react";
 import { stadiums } from "@/data/stadiums";
-import StadiumModal from "./StadiumModal";
-import StadiumMapOverlay from "./StadiumMapOverlay";
+import StadiumModal from "@/components/modals/StadiumModal";
+import StadiumMapOverlay from "@/components/maps/StadiumMapOverlay";
 
 export default function StadiumsTab() {
   // 선택된 경기장 ID (모달 표시용)

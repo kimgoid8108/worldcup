@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { stadiums } from '@/data/stadiums';
-import StadiumViewer from '@/components/StadiumViewer';
+import StadiumViewer from '@/components/ui/StadiumViewer';
 
 interface PageProps {
   params: {

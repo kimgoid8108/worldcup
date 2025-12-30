@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { Player } from "@/data/players";
 
 interface PlayerModalProps {
@@ -18,10 +18,31 @@ interface PlayerModalProps {
   onClose: () => void;
 }
 
+// 포지션 한글 변환 맵 (컴포넌트 외부로 이동하여 재생성 방지)
+const POSITION_MAP: Record<string, string> = {
+  GK: "골키퍼",
+  DF: "수비수",
+  MF: "미드필더",
+  FW: "공격수",
+};
+
+// 스크롤 복원 헬퍼 함수
+const restoreScroll = () => {
+  const scrollY = document.body.style.top;
+  document.body.style.position = "";
+  document.body.style.top = "";
+  document.body.style.width = "";
+  document.body.style.overflow = "";
+  document.documentElement.style.overflow = "";
+  if (scrollY) {
+    window.scrollTo(0, parseInt(scrollY || "0") * -1);
+  }
+};
+
 export default function PlayerModal({ player, countryName, onClose }: PlayerModalProps) {
   /**
    * ESC 키로 모달 닫기
-   * 최상단 모달이므로 이벤트 전파를 막아 하위 모달이 닫히지 않도록 함
+   * PlayerModal은 최상위 모달이므로 capture phase에서 먼저 처리
    */
   useEffect(() => {
     if (!player) return;
@@ -44,83 +65,60 @@ export default function PlayerModal({ player, countryName, onClose }: PlayerModa
   /**
    * 모달 열림/닫힘 시 배경 스크롤 제어
    * CountryModal이 이미 열려있을 때는 스크롤 잠금을 추가로 적용하지 않음
+   * PlayerModal은 CountryModal 위에 표시되므로 스크롤 제어는 CountryModal에 맡김
    */
   useEffect(() => {
-    if (player) {
-      // 이미 body가 fixed 상태인지 확인 (CountryModal이 열려있을 수 있음)
-      const isAlreadyFixed = document.body.style.position === "fixed";
-      
-      if (!isAlreadyFixed) {
-        const scrollY = window.scrollY;
-        document.body.style.position = "fixed";
-        document.body.style.top = `-${scrollY}px`;
-        document.body.style.width = "100%";
-        document.body.style.overflow = "hidden";
-        document.documentElement.style.overflow = "hidden";
-      }
-    } else {
-      // 모달이 닫힐 때, CountryModal이 여전히 열려있는지 확인
-      const isCountryModalOpen = document.querySelector('[class*="fixed inset-0 z-50"]') !== null;
-      
-      if (!isCountryModalOpen) {
-        const scrollY = document.body.style.top;
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.width = "";
-        document.body.style.overflow = "";
-        document.documentElement.style.overflow = "";
-        if (scrollY) {
-          window.scrollTo(0, parseInt(scrollY || "0") * -1);
-        }
-      }
+    if (!player) return;
+
+    // CountryModal이 열려있는지 확인 (z-40 클래스를 가진 요소 확인)
+    const isCountryModalOpen = document.querySelector('.fixed.inset-0.z-40') !== null;
+    
+    // CountryModal이 열려있지 않은 경우에만 스크롤 제어
+    if (!isCountryModalOpen) {
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = `-${scrollX}px`;
+      document.body.style.width = "100%";
+      document.body.style.height = "100%";
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
     }
 
     return () => {
-      if (player) {
-        // CountryModal이 여전히 열려있는지 확인
-        const isCountryModalOpen = document.querySelector('[class*="fixed inset-0 z-50"]') !== null;
-        
-        if (!isCountryModalOpen) {
-          const scrollY = document.body.style.top;
-          document.body.style.position = "";
-          document.body.style.top = "";
-          document.body.style.width = "";
-          document.body.style.overflow = "";
-          document.documentElement.style.overflow = "";
-          if (scrollY) {
-            window.scrollTo(0, parseInt(scrollY || "0") * -1);
-          }
-        }
+      // PlayerModal이 닫힐 때, CountryModal이 여전히 열려있는지 확인
+      const isCountryModalStillOpen = document.querySelector('.fixed.inset-0.z-40') !== null;
+      
+      // CountryModal이 열려있지 않은 경우에만 스크롤 복원
+      if (!isCountryModalStillOpen) {
+        restoreScroll();
       }
     };
   }, [player]);
 
-  // 선수 정보가 없으면 모달 표시 안 함
-  if (!player) return null;
+  // 포지션 한글 변환 메모이제이션 (hooks는 항상 같은 순서로 호출되어야 함)
+  const positionName = useMemo(() => player ? (POSITION_MAP[player.position] || player.position) : '', [player]);
 
-  // 포지션 한글 변환
-  const getPositionName = (position: string): string => {
-    const positionMap: Record<string, string> = {
-      GK: "골키퍼",
-      DF: "수비수",
-      MF: "미드필더",
-      FW: "공격수",
-    };
-    return positionMap[position] || position;
-  };
+  // 배경 클릭 핸들러 메모이제이션 (hooks는 early return 이전에 호출되어야 함)
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  }, [onClose]);
+
+  // 선수 정보가 없으면 모달 표시 안 함 (모든 hooks 호출 후 early return)
+  if (!player) return null;
 
   return (
     <div
       className="fixed inset-0 z-[45] flex items-center justify-center p-4"
       style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         pointerEvents: 'auto',
       }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
+      onClick={handleBackdropClick}
     >
       {/* 모달 컨테이너 */}
       <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-blue-400" style={{ pointerEvents: 'auto', position: 'relative', zIndex: 46 }}>
@@ -171,7 +169,7 @@ export default function PlayerModal({ player, countryName, onClose }: PlayerModa
                 <div className="flex items-center gap-2 justify-center md:justify-start">
                   <span className="text-gray-600 font-medium">포지션:</span>
                   <span className="text-gray-800 font-semibold">
-                    {getPositionName(player.position)} ({player.position})
+                    {positionName} ({player.position})
                   </span>
                 </div>
 

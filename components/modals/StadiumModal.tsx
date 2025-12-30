@@ -11,7 +11,7 @@
 
 import { useEffect, useRef } from "react";
 import { stadiums } from "@/data/stadiums";
-import StadiumViewer from "./StadiumViewer";
+import StadiumViewer from "@/components/ui/StadiumViewer";
 
 interface StadiumModalProps {
   stadiumId: string | null;
@@ -115,7 +115,11 @@ export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        pointerEvents: 'auto',
+      }}
       onClick={(e) => {
         // 배경 클릭 시 모달 닫기
         if (e.target === e.currentTarget) {
@@ -124,7 +128,7 @@ export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) 
       }}
     >
       {/* 모달 컨테이너 (스크롤 가능) */}
-      <div className="modal-content bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="modal-content bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto" style={{ pointerEvents: 'auto', position: 'relative', zIndex: 51 }}>
         <div className="p-6">
           {/* 헤더: 경기장 이름 및 닫기 버튼 */}
           <div className="flex justify-between items-center mb-2 md:mb-4">

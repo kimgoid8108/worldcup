@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Tabs from "@/components/Tabs";
-import GroupsTab from "@/components/GroupsTab";
-import StadiumsTab from "@/components/StadiumsTab";
+import Tabs from "@/components/tabs/Tabs";
+import GroupsTab from "@/components/tabs/GroupsTab";
+import StadiumsTab from "@/components/tabs/StadiumsTab";
 
 export default function WorldCupPage() {
   const [activeTab, setActiveTab] = useState("groups");

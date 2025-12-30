@@ -14,8 +14,8 @@ import { useState, useMemo } from "react";
 import { pots } from "@/data/pots";
 import { getCountryById } from "@/data/countries";
 import { getPlayersByCountry } from "@/data/players";
-import CountryModal from "./CountryModal";
-import Flag from "./Flag";
+import CountryModal from "@/components/modals/CountryModal";
+import Flag from "@/components/ui/Flag";
 
 export default function PotsTab() {
   // 선택된 국가 ID (국가 모달 표시용)

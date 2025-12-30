@@ -8,12 +8,12 @@
 
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
-import { groups, Match } from "../data/groups";
-import { getCountryById, countries } from "../data/countries";
-import { stadiums } from "../data/stadiums";
-import { pots } from "../data/pots";
-import { getPlayersByCountry, Player } from "../data/players";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { groups, Match } from "@/data/groups";
+import { getCountryById, countries } from "@/data/countries";
+import { stadiums } from "@/data/stadiums";
+import { pots } from "@/data/pots";
+import { getPlayersByCountry, Player } from "@/data/players";
 import CountryModal from "@/components/modals/CountryModal";
 import PlayerModal from "@/components/modals/PlayerModal";
 import Flag from "@/components/ui/Flag";
@@ -22,7 +22,8 @@ export default function GroupsTab() {
   // 선택된 국가 ID (국가 모달 표시용)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
-  // 선택된 선수 (선수 모달 표시용)
+  // 선택된 선수는 CountryModal 내부에서 관리하므로 여기서는 제거
+  // GroupsTab에서 직접 선수를 클릭하는 경우를 위한 상태 (경기 상세 모달에서 선수 클릭 시)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [selectedPlayerCountryName, setSelectedPlayerCountryName] = useState<
     string | undefined
@@ -188,17 +189,80 @@ export default function GroupsTab() {
     []
   );
 
-  // 모달이 열려있을 때 뒷 페이지 스크롤 방지
+  // 경기 상세 모달의 스크롤 제어
   useEffect(() => {
-    if (selectedMatch || selectedCountry || selectedPlayer) {
+    if (selectedMatch) {
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = `-${scrollX}px`;
+      document.body.style.width = "100%";
+      document.body.style.height = "100%";
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset";
+      // 모달이 닫힐 때 스크롤 복원
+      const savedScrollY = document.body.style.top;
+      const savedScrollX = document.body.style.left;
+      
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.width = "";
+      document.body.style.height = "";
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      
+      if (savedScrollY) {
+        window.scrollTo(parseInt(savedScrollX || "0") * -1, parseInt(savedScrollY || "0") * -1);
+      }
     }
+
     return () => {
-      document.body.style.overflow = "unset";
+      if (selectedMatch) {
+        const savedScrollY = document.body.style.top;
+        const savedScrollX = document.body.style.left;
+        
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.width = "";
+        document.body.style.height = "";
+        document.body.style.overflow = "";
+        document.documentElement.style.overflow = "";
+        
+        if (savedScrollY) {
+          window.scrollTo(parseInt(savedScrollX || "0") * -1, parseInt(savedScrollY || "0") * -1);
+        }
+      }
     };
-  }, [selectedMatch, selectedCountry, selectedPlayer]);
+  }, [selectedMatch]);
+
+  // ESC 키로 경기 상세 모달 닫기
+  useEffect(() => {
+    if (!selectedMatch) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        // 다른 모달이 열려있는지 확인
+        const hasOtherModal = document.querySelector('.fixed.inset-0.z-40') !== null || 
+                              document.querySelector('.fixed.inset-0.z-\\[45\\]') !== null;
+        
+        if (!hasOtherModal) {
+          e.preventDefault();
+          e.stopPropagation();
+          setSelectedMatch(null);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [selectedMatch]);
 
   // 검색어에 맞는 국가 목록 (국가 이름으로 검색했을 때)
   // 성능 최적화: useMemo로 검색 결과 캐싱
@@ -332,7 +396,8 @@ export default function GroupsTab() {
 
   return (
     <div>
-      {/* 선수 상세 정보 모달 */}
+      {/* 선수 상세 정보 모달 (경기 상세 모달에서 선수를 클릭한 경우에만 표시) */}
+      {/* CountryModal 내부의 PlayerModal과는 별개로, 경기 상세 모달에서 직접 선수를 클릭한 경우를 처리 */}
       <PlayerModal
         player={selectedPlayer}
         countryName={selectedPlayerCountryName}
@@ -342,7 +407,7 @@ export default function GroupsTab() {
         }}
       />
 
-      {/* 국가 상세 정보 모달 */}
+      {/* 국가 상세 정보 모달 (내부에서 PlayerModal을 관리) */}
       <CountryModal
         countryId={selectedCountry}
         onClose={() => setSelectedCountry(null)}
@@ -379,11 +444,16 @@ export default function GroupsTab() {
 
           return (
             <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+              className="fixed inset-0 z-[35] flex items-center justify-center p-4"
+              style={{ 
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                pointerEvents: 'auto',
+              }}
               onClick={() => setSelectedMatch(null)}
             >
               <div
-                className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+                className="modal-content bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 36 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* 모달 헤더 */}

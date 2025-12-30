@@ -15,7 +15,7 @@
 import { useState } from "react";
 import { pots } from "@/data/pots";
 import { getCountryById } from "@/data/countries";
-import Flag from "./Flag";
+import Flag from "@/components/ui/Flag";
 
 export default function PotInfo() {
   const [selectedPot, setSelectedPot] = useState<number | null>(null);
