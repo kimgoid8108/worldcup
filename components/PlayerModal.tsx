@@ -20,35 +20,76 @@ interface PlayerModalProps {
 
 export default function PlayerModal({ player, countryName, onClose }: PlayerModalProps) {
   /**
+   * ESC 키로 모달 닫기
+   * 최상단 모달이므로 이벤트 전파를 막아 하위 모달이 닫히지 않도록 함
+   */
+  useEffect(() => {
+    if (!player) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+    };
+
+    // capture phase에서 이벤트를 먼저 처리하여 하위 모달의 핸들러가 실행되지 않도록 함
+    window.addEventListener("keydown", handleEscape, true);
+    return () => {
+      window.removeEventListener("keydown", handleEscape, true);
+    };
+  }, [player, onClose]);
+
+  /**
    * 모달 열림/닫힘 시 배경 스크롤 제어
+   * CountryModal이 이미 열려있을 때는 스크롤 잠금을 추가로 적용하지 않음
    */
   useEffect(() => {
     if (player) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-      document.body.style.overflow = "hidden";
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      // 이미 body가 fixed 상태인지 확인 (CountryModal이 열려있을 수 있음)
+      const isAlreadyFixed = document.body.style.position === "fixed";
+      
+      if (!isAlreadyFixed) {
+        const scrollY = window.scrollY;
+        document.body.style.position = "fixed";
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = "100%";
+        document.body.style.overflow = "hidden";
+        document.documentElement.style.overflow = "hidden";
       }
-    }
-
-    return () => {
-      if (player) {
+    } else {
+      // 모달이 닫힐 때, CountryModal이 여전히 열려있는지 확인
+      const isCountryModalOpen = document.querySelector('[class*="fixed inset-0 z-50"]') !== null;
+      
+      if (!isCountryModalOpen) {
         const scrollY = document.body.style.top;
         document.body.style.position = "";
         document.body.style.top = "";
         document.body.style.width = "";
         document.body.style.overflow = "";
+        document.documentElement.style.overflow = "";
         if (scrollY) {
           window.scrollTo(0, parseInt(scrollY || "0") * -1);
+        }
+      }
+    }
+
+    return () => {
+      if (player) {
+        // CountryModal이 여전히 열려있는지 확인
+        const isCountryModalOpen = document.querySelector('[class*="fixed inset-0 z-50"]') !== null;
+        
+        if (!isCountryModalOpen) {
+          const scrollY = document.body.style.top;
+          document.body.style.position = "";
+          document.body.style.top = "";
+          document.body.style.width = "";
+          document.body.style.overflow = "";
+          document.documentElement.style.overflow = "";
+          if (scrollY) {
+            window.scrollTo(0, parseInt(scrollY || "0") * -1);
+          }
         }
       }
     };
@@ -70,7 +111,11 @@ export default function PlayerModal({ player, countryName, onClose }: PlayerModa
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4"
+      className="fixed inset-0 z-[45] flex items-center justify-center p-4"
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        pointerEvents: 'auto',
+      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
@@ -78,7 +123,7 @@ export default function PlayerModal({ player, countryName, onClose }: PlayerModa
       }}
     >
       {/* 모달 컨테이너 */}
-      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-blue-400" style={{ pointerEvents: 'auto', position: 'relative', zIndex: 46 }}>
         <div className="p-6">
           {/* 헤더: 닫기 버튼 */}
           <div className="flex justify-end mb-4">

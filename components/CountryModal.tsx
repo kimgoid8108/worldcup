@@ -33,45 +33,122 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   /**
+   * ESC 키로 모달 닫기
+   * PlayerModal이 열려있으면 닫히지 않도록 처리
+   */
+  useEffect(() => {
+    if (!countryId) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        // PlayerModal이 열려있는지 확인 (z-[45] 클래스를 가진 요소가 있는지 확인)
+        const playerModal = document.querySelector('[class*="z-[45]"]');
+        if (playerModal) {
+          // PlayerModal이 열려있으면 이 이벤트를 무시 (PlayerModal이 먼저 처리하도록)
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [countryId, onClose]);
+
+  /**
    * 모달 열림/닫힘 시 배경 스크롤 제어
    * - 모달이 열리면 배경 스크롤 잠금
    * - 모달이 닫히면 스크롤 위치 복원
+   * - wheel/touchmove 이벤트로 배경 스크롤 완전 차단
    */
   useEffect(() => {
     if (countryId) {
       // 현재 스크롤 위치 저장
       const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
 
       // 배경 스크롤 잠금 (body 고정)
       document.body.style.position = "fixed";
       document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = `-${scrollX}px`;
       document.body.style.width = "100%";
+      document.body.style.height = "100%";
       document.body.style.overflow = "hidden";
-    } else {
-      // 모달이 닫힌 경우 스크롤 복원
-      const scrollY = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    }
+      document.documentElement.style.overflow = "hidden";
 
-    // cleanup: 모달 닫힐 때 스크롤 복원
-    return () => {
-      if (countryId) {
-        const scrollY = document.body.style.top;
+      /**
+       * 배경 스크롤 완전 차단 함수
+       * 모달 내부(.modal-content)가 아닌 영역의 스크롤을 완전히 차단
+       */
+      const preventScroll = (e: WheelEvent | TouchEvent) => {
+        // e.target이 Element인지 확인
+        if (!(e.target instanceof Element)) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+        
+        const target = e.target as HTMLElement;
+        const modalContent = target.closest('.modal-content');
+
+        // 모달 내부가 아닌 경우 무조건 스크롤 차단
+        if (!modalContent) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      };
+
+      // 전역 스크롤 이벤트 리스너 추가 (여러 이벤트 타입)
+      window.addEventListener('wheel', preventScroll, { passive: false, capture: true });
+      window.addEventListener('touchmove', preventScroll, { passive: false, capture: true });
+      document.addEventListener('wheel', preventScroll, { passive: false, capture: true });
+      document.addEventListener('touchmove', preventScroll, { passive: false, capture: true });
+
+      // cleanup: 모달 닫힐 때 이벤트 리스너 제거 및 스크롤 복원
+      return () => {
+        window.removeEventListener('wheel', preventScroll, true);
+        window.removeEventListener('touchmove', preventScroll, true);
+        document.removeEventListener('wheel', preventScroll, true);
+        document.removeEventListener('touchmove', preventScroll, true);
+
+        const savedScrollY = document.body.style.top;
+        const savedScrollX = document.body.style.left;
+        
         document.body.style.position = "";
         document.body.style.top = "";
+        document.body.style.left = "";
         document.body.style.width = "";
+        document.body.style.height = "";
         document.body.style.overflow = "";
-        if (scrollY) {
-          window.scrollTo(0, parseInt(scrollY || "0") * -1);
+        document.documentElement.style.overflow = "";
+
+        // 스크롤 위치 복원
+        if (savedScrollY) {
+          window.scrollTo(parseInt(savedScrollX || "0") * -1, parseInt(savedScrollY || "0") * -1);
         }
+      };
+    } else {
+      // 모달이 닫힌 경우 스크롤 복원
+      const savedScrollY = document.body.style.top;
+      const savedScrollX = document.body.style.left;
+      
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.width = "";
+      document.body.style.height = "";
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      
+      if (savedScrollY) {
+        window.scrollTo(parseInt(savedScrollX || "0") * -1, parseInt(savedScrollY || "0") * -1);
       }
-    };
+    }
   }, [countryId]);
 
   // 국가 정보가 없으면 모달 표시 안 함
@@ -90,7 +167,18 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
       />
 
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+        className="fixed inset-0 z-40 flex items-center justify-center p-4"
+        style={{ 
+          touchAction: 'none',
+          overflow: 'hidden',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          pointerEvents: 'auto',
+        }}
         onClick={(e) => {
           // 배경 클릭 시 모달 닫기
           if (e.target === e.currentTarget) {
@@ -99,7 +187,7 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
         }}
       >
         {/* 모달 컨테이너 */}
-        <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="modal-content bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" style={{ pointerEvents: 'auto', position: 'relative', zIndex: 41 }}>
           <div className="p-6">
             {/* 헤더: 국가 정보 및 닫기 버튼 */}
             <div className="flex justify-between items-center mb-4">

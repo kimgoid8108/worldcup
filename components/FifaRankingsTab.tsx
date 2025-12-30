@@ -67,11 +67,9 @@ export default function FifaRankingsTab() {
   }, [searchQuery]);
 
   return (
-    <div>
-      {/* 국가 상세 정보 모달 */}
-      <CountryModal countryId={selectedCountry} onClose={() => setSelectedCountry(null)} />
-
-      <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+    <>
+      {/* 메인 리스트 - 항상 렌더링되어야 함 (언마운트 방지) */}
+      <div className="bg-white rounded-lg shadow-lg p-4 md:p-6" style={{ position: 'relative', zIndex: 1 }}>
         <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">
           FIFA 랭킹 순위
         </h2>
@@ -130,7 +128,10 @@ export default function FifaRankingsTab() {
           </div>
         )}
       </div>
-    </div>
+
+      {/* 국가 상세 정보 모달 - 메인 리스트와 분리하여 항상 렌더링 가능하도록 */}
+      <CountryModal countryId={selectedCountry} onClose={() => setSelectedCountry(null)} />
+    </>
   );
 }
 

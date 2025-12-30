@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { stadiums } from "@/data/stadiums";
 import StadiumViewer from "./StadiumViewer";
 
@@ -21,6 +21,9 @@ interface StadiumModalProps {
 export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) {
   // 경기장 ID로 경기장 정보 조회
   const stadium = stadiumId ? stadiums.find((s) => s.id === stadiumId) : null;
+  
+  // 3D 뷰어 섹션 참조 (모바일에서 스크롤용)
+  const viewerRef = useRef<HTMLDivElement>(null);
 
   /**
    * 모달 열림/닫힘 시 배경 스크롤 제어
@@ -87,6 +90,26 @@ export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) 
     }
   }, [stadiumId]);
 
+  /**
+   * 모바일에서 모달이 열릴 때 3D 뷰어 섹션으로 자동 스크롤
+   */
+  useEffect(() => {
+    if (stadiumId && viewerRef.current) {
+      // 모바일 화면 크기 체크 (768px 미만)
+      const isMobile = window.innerWidth < 768;
+      
+      if (isMobile) {
+        // 약간의 지연 후 스크롤 (모달 렌더링 완료 후)
+        setTimeout(() => {
+          viewerRef.current?.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "start" 
+          });
+        }, 100);
+      }
+    }
+  }, [stadiumId]);
+
   // 경기장 정보가 없으면 모달 표시 안 함
   if (!stadium) return null;
 
@@ -104,8 +127,8 @@ export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) 
       <div className="modal-content bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           {/* 헤더: 경기장 이름 및 닫기 버튼 */}
-          <div className="flex justify-between items-center mb-4">
-            <div>
+          <div className="flex justify-between items-center mb-2 md:mb-4">
+            <div className="md:block hidden">
               <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">
                 {stadium.name}
               </h2>
@@ -116,20 +139,26 @@ export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) 
                 수용 인원: {stadium.capacity.toLocaleString()}명
               </p>
             </div>
+            {/* 모바일: 간단한 헤더 */}
+            <div className="md:hidden flex-1">
+              <h2 className="text-lg font-bold text-gray-800 mb-1">
+                {stadium.name}
+              </h2>
+            </div>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-3xl font-bold w-10 h-10 flex items-center justify-center"
+              className="text-gray-500 hover:text-gray-700 text-3xl font-bold w-10 h-10 flex items-center justify-center flex-shrink-0"
               aria-label="모달 닫기"
             >
               ×
             </button>
           </div>
 
-          {/* 경기장 설명 */}
-          <p className="text-gray-700 mb-6">{stadium.description}</p>
+          {/* 경기장 설명 (데스크톱에서만 표시) */}
+          <p className="text-gray-700 mb-6 hidden md:block">{stadium.description}</p>
 
           {/* 3D 경기장 뷰어 섹션 */}
-          <div className="mt-6">
+          <div ref={viewerRef} className="mt-6">
             <h3 className="text-xl font-semibold mb-4 text-gray-800">
               3D 경기장 뷰어
             </h3>

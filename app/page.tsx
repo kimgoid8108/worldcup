@@ -20,6 +20,7 @@ import Tabs from "@/components/Tabs";
 import PotsTab from "@/components/PotsTab";
 import GroupsTab from "@/components/GroupsTab";
 import StadiumsTab from "@/components/StadiumsTab";
+import StadiumModal from "@/components/StadiumModal";
 import FifaRankingsTab from "@/components/FifaRankingsTab";
 import { countries } from "@/data/countries";
 import { stadiums } from "@/data/stadiums";
@@ -69,6 +70,9 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<
     "pots" | "groups" | "stadiums" | "fifarankings"
   >("groups");
+
+  // 선택된 경기장 ID (모달 표시용)
+  const [selectedStadium, setSelectedStadium] = useState<string | null>(null);
 
   const introVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -193,8 +197,8 @@ export default function Home() {
             transition={{ duration: 1.2, ease: "easeOut" }}
             className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 relative overflow-hidden"
           >
-            {/* 배경 국기 애니메이션 - 양쪽 사이드만 */}
-            <div className="fixed inset-0 z-0 pointer-events-none opacity-50">
+            {/* 배경 국기 애니메이션 - 양쪽 사이드만 (데스크톱에서만 표시) */}
+            <div className="hidden md:block fixed inset-0 z-0 pointer-events-none opacity-50">
               {/* 왼쪽 사이드 */}
               <div className="absolute top-0 left-4 md:left-8 lg:left-12 h-full w-24 md:w-32">
                 <motion.div
@@ -311,26 +315,6 @@ export default function Home() {
                       href="#"
                       onClick={(e) => {
                         e.preventDefault();
-                        setActiveTab("stadiums");
-                        setTimeout(() => {
-                          const element =
-                            document.getElementById("stadium-list");
-                          if (element) {
-                            element.scrollIntoView({
-                              behavior: "smooth",
-                              block: "start",
-                            });
-                          }
-                        }, 100);
-                      }}
-                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                    >
-                      경기장 리스트
-                    </Link>
-                    <Link
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
                         setActiveTab("pots");
                         setTimeout(() => {
                           const element =
@@ -345,7 +329,7 @@ export default function Home() {
                           }
                         }, 100);
                       }}
-                      className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
                     >
                       참가 국가
                     </Link>
@@ -391,10 +375,10 @@ export default function Home() {
                     .filter((s) => s.sketchfabModelId)
                     .slice(0, 3)
                     .map((stadium) => (
-                      <Link
+                      <button
                         key={stadium.id}
-                        href={`/stadiums/${stadium.id}`}
-                        className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-6"
+                        onClick={() => setSelectedStadium(stadium.id)}
+                        className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-6 text-left w-full"
                       >
                         <h3 className="text-xl font-semibold text-gray-800 mb-2">
                           {stadium.name}
@@ -405,13 +389,16 @@ export default function Home() {
                         <p className="text-gray-500 text-xs">
                           수용 인원: {stadium.capacity.toLocaleString()}명
                         </p>
-                      </Link>
+                      </button>
                     ))}
                 </div>
               </section>
 
               {/* 기존 탭 네비게이션 및 콘텐츠 */}
-              <section className="p-4 md:p-8">
+              <section
+                className="p-4 md:p-8"
+                style={{ position: "relative", zIndex: 1 }}
+              >
                 {/* 헤더: 제목 */}
                 <div className="flex justify-center items-center mb-6 md:mb-8">
                   <h1 className="text-2xl md:text-4xl font-bold text-gray-800">
@@ -446,6 +433,12 @@ export default function Home() {
                   )}
                 </motion.div>
               </section>
+
+              {/* 경기장 모달 */}
+              <StadiumModal
+                stadiumId={selectedStadium}
+                onClose={() => setSelectedStadium(null)}
+              />
 
               {/* Footer */}
               <footer className="px-4 md:px-8 py-8 mt-16 border-t border-gray-200">

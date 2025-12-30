@@ -460,19 +460,21 @@ export default function GroupsTab() {
                   )}
 
                   {/* 선수 명단 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2 md:gap-4">
                     {/* 팀1 선수 명단 */}
                     {team1 && team1Players.length > 0 && (
-                      <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-                        <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                      <div className="bg-gray-50 rounded-lg p-2 md:p-4 border-2 border-gray-200">
+                        <h4 className="text-sm md:text-lg font-bold text-gray-800 mb-2 md:mb-3 flex items-center gap-1 md:gap-2">
                           {team1 ? (
                             <Flag country={team1} size="sm" />
                           ) : (
-                            <span className="text-lg">⚽</span>
+                            <span className="text-sm md:text-lg">⚽</span>
                           )}
-                          <span>{team1Name} 선수 명단</span>
+                          <span className="text-xs md:text-base">
+                            {team1Name}
+                          </span>
                         </h4>
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                        <div className="space-y-1 md:space-y-2 max-h-96 overflow-y-auto">
                           {team1Players.map((player) => (
                             <div
                               key={player.id}
@@ -480,26 +482,28 @@ export default function GroupsTab() {
                                 setSelectedPlayer(player);
                                 setSelectedPlayerCountryName(team1Name);
                               }}
-                              className="p-2 bg-white rounded border border-gray-200 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer"
+                              className="p-1 md:p-2 bg-white rounded border border-gray-200 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer"
                             >
                               <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="font-semibold text-gray-800 text-sm">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-800 text-xs md:text-sm truncate">
                                     {player.name}
                                     {player.nameEn && (
-                                      <span className="text-xs font-normal text-gray-600 ml-1">
+                                      <span className="text-[10px] md:text-xs font-normal text-gray-600 ml-1 hidden md:inline">
                                         ({player.nameEn})
                                       </span>
                                     )}
                                   </p>
-                                  <div className="flex items-center gap-2 text-xs text-gray-600 mt-1">
-                                    <span>
+                                  <div className="flex items-center gap-1 md:gap-2 text-[10px] md:text-xs text-gray-600 mt-0.5 md:mt-1 flex-wrap">
+                                    <span className="truncate">
                                       {getPositionName(player.position)}
                                     </span>
                                     <span>•</span>
                                     <span>{player.age}세</span>
-                                    <span>•</span>
-                                    <span>{player.club}</span>
+                                    <span className="hidden md:inline">•</span>
+                                    <span className="hidden md:inline truncate">
+                                      {player.club}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -511,16 +515,18 @@ export default function GroupsTab() {
 
                     {/* 팀2 선수 명단 */}
                     {team2 && team2Players.length > 0 && (
-                      <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-                        <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                      <div className="bg-gray-50 rounded-lg p-2 md:p-4 border-2 border-gray-200">
+                        <h4 className="text-sm md:text-lg font-bold text-gray-800 mb-2 md:mb-3 flex items-center gap-1 md:gap-2">
                           {team2 ? (
                             <Flag country={team2} size="sm" />
                           ) : (
-                            <span className="text-lg">⚽</span>
+                            <span className="text-sm md:text-lg">⚽</span>
                           )}
-                          <span>{team2Name} 선수 명단</span>
+                          <span className="text-xs md:text-base">
+                            {team2Name}
+                          </span>
                         </h4>
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                        <div className="space-y-1 md:space-y-2 max-h-96 overflow-y-auto">
                           {team2Players.map((player) => (
                             <div
                               key={player.id}
@@ -528,26 +534,28 @@ export default function GroupsTab() {
                                 setSelectedPlayer(player);
                                 setSelectedPlayerCountryName(team2Name);
                               }}
-                              className="p-2 bg-white rounded border border-gray-200 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer"
+                              className="p-1 md:p-2 bg-white rounded border border-gray-200 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer"
                             >
                               <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="font-semibold text-gray-800 text-sm">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-800 text-xs md:text-sm truncate">
                                     {player.name}
                                     {player.nameEn && (
-                                      <span className="text-xs font-normal text-gray-600 ml-1">
+                                      <span className="text-[10px] md:text-xs font-normal text-gray-600 ml-1 hidden md:inline">
                                         ({player.nameEn})
                                       </span>
                                     )}
                                   </p>
-                                  <div className="flex items-center gap-2 text-xs text-gray-600 mt-1">
-                                    <span>
+                                  <div className="flex items-center gap-1 md:gap-2 text-[10px] md:text-xs text-gray-600 mt-0.5 md:mt-1 flex-wrap">
+                                    <span className="truncate">
                                       {getPositionName(player.position)}
                                     </span>
                                     <span>•</span>
                                     <span>{player.age}세</span>
-                                    <span>•</span>
-                                    <span>{player.club}</span>
+                                    <span className="hidden md:inline">•</span>
+                                    <span className="hidden md:inline truncate">
+                                      {player.club}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
