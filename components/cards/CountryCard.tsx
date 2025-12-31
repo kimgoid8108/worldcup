@@ -31,21 +31,22 @@ export default function CountryCard({
   return (
     <button
       onClick={() => onClick?.(country.id)}
-      className={`px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col items-center justify-center gap-2 relative group ${className}`}
+      className={`px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-row items-center justify-between relative group max-w-2xl mx-auto w-full ${className}`}
     >
-      <Flag country={country} size="lg" />
-      <span className="text-sm font-semibold text-gray-800 text-center">
-        {country.name}
-      </span>
-      {fifaRanking && fifaRank && (
-        <span className="text-xs text-gray-600 text-center">
-          {fifaRank}위 ({fifaRanking}점)
+      <Flag country={country} size="xl" />
+      <div className="flex flex-col items-end">
+        <span className="text-sm font-semibold text-gray-800">
+          {country.name}
         </span>
-      )}
+        {fifaRanking && fifaRank && (
+          <span className="text-xs text-gray-600">
+            {fifaRank}위 ({fifaRanking}점)
+          </span>
+        )}
+      </div>
       {highlight && (
         <span className="absolute inset-0 border-2 border-yellow-400 rounded-lg animate-pulse" />
       )}
     </button>
   );
 }
-

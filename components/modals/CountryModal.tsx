@@ -25,24 +25,6 @@ interface CountryModalProps {
   onClose: () => void;
 }
 
-// 스크롤 복원 헬퍼 함수
-const restoreScroll = () => {
-  const savedScrollY = document.body.style.top;
-  const savedScrollX = document.body.style.left;
-  
-  document.body.style.position = "";
-  document.body.style.top = "";
-  document.body.style.left = "";
-  document.body.style.width = "";
-  document.body.style.height = "";
-  document.body.style.overflow = "";
-  document.documentElement.style.overflow = "";
-  
-  if (savedScrollY) {
-    window.scrollTo(parseInt(savedScrollX || "0") * -1, parseInt(savedScrollY || "0") * -1);
-  }
-};
-
 export default function CountryModal({ countryId, onClose }: CountryModalProps) {
   // 국가 ID로 국가 정보 조회
   const country = useMemo(() => countryId ? getCountryById(countryId) : null, [countryId]);
@@ -96,25 +78,12 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
 
   /**
    * 모달 열림/닫힘 시 배경 스크롤 제어
-   * - 모달이 열리면 배경 스크롤 잠금
-   * - 모달이 닫히면 스크롤 위치 복원
-   * - wheel/touchmove 이벤트로 배경 스크롤 완전 차단
+   * - 모달이 열리면 배경 스크롤만 잠금 (배경은 보이도록 유지)
+   * - 모달이 닫히면 스크롤 복원
+   * - wheel/touchmove 이벤트로 배경 스크롤만 차단
    */
   useEffect(() => {
     if (countryId) {
-      // 현재 스크롤 위치 저장
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
-
-      // 배경 스크롤 잠금 (body 고정)
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = `-${scrollX}px`;
-      document.body.style.width = "100%";
-      document.body.style.height = "100%";
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-
       /**
        * 배경 스크롤 완전 차단 함수
        * 모달 내부(.modal-content)가 아닌 영역의 스크롤을 완전히 차단
@@ -126,7 +95,7 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
           e.stopPropagation();
           return false;
         }
-        
+
         const target = e.target as HTMLElement;
         const modalContent = target.closest('.modal-content');
 
@@ -144,17 +113,13 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
       document.addEventListener('wheel', preventScroll, { passive: false, capture: true });
       document.addEventListener('touchmove', preventScroll, { passive: false, capture: true });
 
-      // cleanup: 모달 닫힐 때 이벤트 리스너 제거 및 스크롤 복원
+      // cleanup: 모달 닫힐 때 이벤트 리스너 제거
       return () => {
         window.removeEventListener('wheel', preventScroll, true);
         window.removeEventListener('touchmove', preventScroll, true);
         document.removeEventListener('wheel', preventScroll, true);
         document.removeEventListener('touchmove', preventScroll, true);
-        restoreScroll();
       };
-    } else {
-      // 모달이 닫힌 경우 스크롤 복원
-      restoreScroll();
     }
   }, [countryId]);
 
@@ -194,7 +159,7 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
 
       <div
         className="fixed inset-0 z-40 flex items-center justify-center p-4"
-        style={{ 
+        style={{
           touchAction: 'none',
           overflow: 'hidden',
           position: 'fixed',
@@ -202,7 +167,7 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
           pointerEvents: 'auto',
         }}
         onClick={handleBackdropClick}
@@ -216,12 +181,14 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
               subtitle={country.code}
               onClose={onClose}
             >
-              <Flag country={country} size="xl" />
-              {fifaRanking && fifaRank && (
-                <p className="text-sm text-blue-600 font-semibold mt-1">
-                  FIFA 랭킹: {fifaRank}위 ({fifaRanking}점)
-                </p>
-              )}
+              <div className="flex flex-col items-center">
+                <Flag country={country} size="xl" />
+                {fifaRanking && fifaRank && (
+                  <p className="text-sm text-blue-600 font-semibold mt-1">
+                    FIFA 랭킹: {fifaRank}위 ({fifaRanking}점)
+                  </p>
+                )}
+              </div>
             </ModalHeader>
 
             {/* 본문: 선수 명단 및 국가 위치 */}

@@ -48,9 +48,7 @@ export default function FifaRankingsTab() {
     const allTeams = countries.map((country) => country.id);
 
     // 검색어 필터 적용
-    const filteredTeams = allTeams.filter((teamId) =>
-      matchesSearch(teamId, searchQuery)
-    );
+    const filteredTeams = allTeams.filter((teamId) => matchesSearch(teamId, searchQuery));
 
     // FIFA 랭킹 순으로 정렬
     return filteredTeams.sort((a, b) => {
@@ -80,44 +78,28 @@ export default function FifaRankingsTab() {
   return (
     <>
       {/* 메인 리스트 - 항상 렌더링되어야 함 (언마운트 방지) */}
-      <div className="bg-white rounded-lg shadow-lg p-4 md:p-6" style={{ position: 'relative', zIndex: 1 }}>
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">
-          FIFA 랭킹 순위
-        </h2>
+      <div className="bg-white rounded-lg shadow-lg p-4 md:p-6" style={{ position: "relative", zIndex: 1 }}>
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">FIFA 랭킹 순위</h2>
 
         {/* 검색 섹션 */}
         <div className="mb-6">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="팀 이름으로 검색..."
-          />
+          <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="팀 이름으로 검색..." />
         </div>
 
         {/* FIFA 랭킹 순위 목록 */}
         {teamsSortedByRanking.length > 0 ? (
           <div className="bg-gray-50 rounded-lg p-4 md:p-6 border-2 border-gray-200">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               {teamsSortedByRanking.map((teamId) => {
                 const country = getCountryById(teamId);
                 if (!country) return null;
 
-                return (
-                  <CountryCard
-                    key={country.id}
-                    country={country}
-                    onClick={handleCountryClick}
-                    showRanking={true}
-                    highlight={searchQuery ? matchesSearch(country.id, searchQuery) : false}
-                  />
-                );
+                return <CountryCard key={country.id} country={country} onClick={handleCountryClick} showRanking={true} highlight={searchQuery ? matchesSearch(country.id, searchQuery) : false} />;
               })}
             </div>
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-600">
-            검색 결과가 없습니다.
-          </div>
+          <div className="text-center py-8 text-gray-600">검색 결과가 없습니다.</div>
         )}
       </div>
 
@@ -126,4 +108,3 @@ export default function FifaRankingsTab() {
     </>
   );
 }
-
