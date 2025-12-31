@@ -18,6 +18,7 @@ import CountryModal from "@/components/modals/CountryModal";
 import PlayerModal from "@/components/modals/PlayerModal";
 import Flag from "@/components/ui/Flag";
 import SquadBuilder, { Formation } from "@/components/squad/SquadBuilder";
+import ImageSquadBuilder from "@/components/squad/ImageSquadBuilder";
 import PlayerList from "@/components/cards/PlayerList";
 
 export default function GroupsTab() {
@@ -574,24 +575,22 @@ export default function GroupsTab() {
                         )}
                       </div>
 
-                      {/* 통합 스쿼드 빌더 */}
+                      {/* 통합 스쿼드 빌더 (이미지 기반) */}
                       {team1 && team2 && (
-                        <SquadBuilder
+                        <ImageSquadBuilder
                           players={team1Players || []}
                           formation={team1Formation}
                           team2Players={team2Players || []}
                           team2Formation={team2Formation}
-                          onPlayerClick={(player, position, e) => {
-                            if (player && e) {
-                              e.stopPropagation();
-                              setSelectedPlayer(player);
+                          onPlayerClick={(player, index) => {
+                            if (player) {
+                              setSelectedPlayer(player as any);
                               setSelectedPlayerCountryName(team1Name);
                             }
                           }}
-                          onTeam2PlayerClick={(player, position, e) => {
-                            if (player && e) {
-                              e.stopPropagation();
-                              setSelectedPlayer(player);
+                          onTeam2PlayerClick={(player, index) => {
+                            if (player) {
+                              setSelectedPlayer(player as any);
                               setSelectedPlayerCountryName(team2Name);
                             }
                           }}

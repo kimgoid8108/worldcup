@@ -19,6 +19,7 @@ import Flag from "@/components/ui/Flag";
 import ModalHeader from "./ModalHeader";
 import PlayerList from "@/components/cards/PlayerList";
 import SquadBuilder, { Formation } from "@/components/squad/SquadBuilder";
+import ImageSquadBuilder from "@/components/squad/ImageSquadBuilder";
 
 interface CountryModalProps {
   countryId: string | null;
@@ -132,8 +133,10 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
   const fifaRank = useMemo(() => country ? getFifaRank(country.id) : null, [country]);
 
   // 선수 클릭 핸들러 메모이제이션 (hooks는 early return 이전에 호출되어야 함)
-  const handlePlayerClick = useCallback((player: Player, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handlePlayerClick = useCallback((player: Player, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
     setSelectedPlayer(player);
   }, []);
 
@@ -250,12 +253,13 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
                           <option value="4-4-2">4-4-2</option>
                         </select>
                       </div>
-                      <SquadBuilder
+                      <ImageSquadBuilder
                         players={players}
                         formation={formation}
-                        onPlayerClick={(player, position, e) => {
-                          if (player && e) {
-                            handlePlayerClick(player, e);
+                        imageSize="small"
+                        onPlayerClick={(player, index) => {
+                          if (player) {
+                            handlePlayerClick(player as any);
                           }
                         }}
                       />

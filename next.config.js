@@ -18,6 +18,11 @@ const nextConfig = {
         hostname: 'cdn.somesite.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'i.ifh.cc',
+        pathname: '/**',
+      },
     ],
   },
 }
