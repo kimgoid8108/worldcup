@@ -18,7 +18,7 @@ import PlayerModal from "./PlayerModal";
 import Flag from "@/components/ui/Flag";
 import ModalHeader from "./ModalHeader";
 import PlayerList from "@/components/cards/PlayerList";
-import CountryMap from "@/components/maps/CountryMap";
+import SquadBuilder, { Formation } from "@/components/squad/SquadBuilder";
 
 interface CountryModalProps {
   countryId: string | null;
@@ -34,6 +34,10 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
 
   // 선택된 선수 (선수 모달 표시용)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+
+  // 스쿼드 빌더 관련 상태
+  const [activeTab, setActiveTab] = useState<"players" | "squad">("players");
+  const [formation, setFormation] = useState<Formation>("4-3-3");
 
   // CountryModal이 닫힐 때 PlayerModal도 함께 닫기
   useEffect(() => {
@@ -191,26 +195,86 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
               </div>
             </ModalHeader>
 
-            {/* 본문: 선수 명단 및 국가 위치 */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* 선수 명단 섹션 */}
-              <div>
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">선수 명단</h3>
-                <PlayerList
-                  players={players}
-                  onPlayerClick={handlePlayerClick}
-                />
-              </div>
+            {/* 탭 네비게이션 */}
+            <div className="flex gap-2 mb-6 border-b border-gray-200">
+              <button
+                onClick={() => setActiveTab("players")}
+                className={`px-4 py-2 font-semibold transition-colors ${
+                  activeTab === "players"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                선수 명단
+              </button>
+              <button
+                onClick={() => setActiveTab("squad")}
+                className={`px-4 py-2 font-semibold transition-colors ${
+                  activeTab === "squad"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                스쿼드 빌더
+              </button>
+            </div>
 
-              {/* 국가 위치 섹션 (Google Maps) */}
-              <div>
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">국가 위치</h3>
-                <CountryMap
-                  latitude={country.latitude}
-                  longitude={country.longitude}
-                  countryName={country.name}
-                />
-              </div>
+            {/* 본문: 탭별 콘텐츠 */}
+            <div className="min-h-[400px]">
+              {activeTab === "players" && (
+                <div>
+                  <h3 className="text-xl font-semibold mb-3 text-gray-800">선수 명단</h3>
+                  <PlayerList
+                    players={players}
+                    onPlayerClick={handlePlayerClick}
+                  />
+                </div>
+              )}
+
+              {activeTab === "squad" && (
+                <div>
+                  <h3 className="text-xl font-semibold mb-3 text-gray-800">스쿼드 빌더</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* 왼쪽: 주전 스쿼드 */}
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h4 className="text-lg font-semibold text-gray-700">주전 스쿼드</h4>
+                        <select
+                          value={formation}
+                          onChange={(e) => {
+                            setFormation(e.target.value as Formation);
+                          }}
+                          className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-sm"
+                        >
+                          <option value="4-3-3">4-3-3</option>
+                          <option value="4-4-2">4-4-2</option>
+                        </select>
+                      </div>
+                      <SquadBuilder
+                        players={players}
+                        formation={formation}
+                        onPlayerClick={(player, position, e) => {
+                          if (player && e) {
+                            handlePlayerClick(player, e);
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* 오른쪽: 후보 명단 */}
+                    <div className="flex-shrink-0">
+                      <h4 className="text-lg font-semibold mb-3 text-gray-700">후보 명단</h4>
+                      <div className="bg-gray-50 rounded-lg p-4 max-h-[600px] overflow-y-auto">
+                        <PlayerList
+                          players={players}
+                          onPlayerClick={handlePlayerClick}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         </div>

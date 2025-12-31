@@ -195,7 +195,8 @@ export default function Home() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 relative overflow-hidden"
+            className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 relative"
+            style={{ overflow: 'visible' }}
           >
             {/* 배경 국기 애니메이션 - 양쪽 사이드만 (데스크톱에서만 표시) */}
             <div className="hidden md:block fixed inset-0 z-0 pointer-events-none opacity-50">

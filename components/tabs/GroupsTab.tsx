@@ -34,6 +34,8 @@ export default function GroupsTab() {
 
   // 경기 일정 검색어 (전체 경기 일정 필터링용)
   const [matchSearchQuery, setMatchSearchQuery] = useState("");
+  // 선택된 날짜 (전체 경기 일정 필터링용)
+  const [selectedDate, setSelectedDate] = useState<string>("");
 
   // 선택된 경기 (경기 상세 정보 모달 표시용)
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
@@ -192,52 +194,42 @@ export default function GroupsTab() {
   // 경기 상세 모달의 스크롤 제어
   useEffect(() => {
     if (selectedMatch) {
+      // 스크롤바 너비 계산 (스크롤바가 사라질 때 레이아웃이 밀리지 않도록)
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+      // 현재 스크롤 위치 저장
       const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
 
-      document.body.style.position = "fixed";
+      // body에 overflow: hidden 적용 및 스크롤바 너비만큼 padding-right 추가
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.documentElement.style.overflow = 'hidden';
+
+      // 스크롤 위치 고정
+      document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = `-${scrollX}px`;
-      document.body.style.width = "100%";
-      document.body.style.height = "100%";
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-    } else {
-      // 모달이 닫힐 때 스크롤 복원
-      const savedScrollY = document.body.style.top;
-      const savedScrollX = document.body.style.left;
-      
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.width = "";
-      document.body.style.height = "";
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-      
-      if (savedScrollY) {
-        window.scrollTo(parseInt(savedScrollX || "0") * -1, parseInt(savedScrollY || "0") * -1);
-      }
-    }
+      document.body.style.left = '0';
+      document.body.style.width = '100%';
 
-    return () => {
-      if (selectedMatch) {
+      // cleanup: 모달 닫힐 때 스타일 복원
+      return () => {
         const savedScrollY = document.body.style.top;
-        const savedScrollX = document.body.style.left;
-        
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.left = "";
-        document.body.style.width = "";
-        document.body.style.height = "";
-        document.body.style.overflow = "";
-        document.documentElement.style.overflow = "";
-        
+
+        // 스타일 복원
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.documentElement.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.width = '';
+
+        // 스크롤 위치 복원
         if (savedScrollY) {
-          window.scrollTo(parseInt(savedScrollX || "0") * -1, parseInt(savedScrollY || "0") * -1);
+          window.scrollTo(0, parseInt(savedScrollY || '0') * -1);
         }
-      }
-    };
+      };
+    }
   }, [selectedMatch]);
 
   // ESC 키로 경기 상세 모달 닫기
@@ -247,9 +239,9 @@ export default function GroupsTab() {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         // 다른 모달이 열려있는지 확인
-        const hasOtherModal = document.querySelector('.fixed.inset-0.z-40') !== null || 
+        const hasOtherModal = document.querySelector('.fixed.inset-0.z-40') !== null ||
                               document.querySelector('.fixed.inset-0.z-\\[45\\]') !== null;
-        
+
         if (!hasOtherModal) {
           e.preventDefault();
           e.stopPropagation();
@@ -355,31 +347,25 @@ export default function GroupsTab() {
     });
   }, []);
 
-  // 검색어에 따라 필터링된 경기 일정
+  // 검색어와 날짜에 따라 필터링된 경기 일정
   const filteredMatchesByDate = useMemo(() => {
-    if (!matchSearchQuery) {
-      // 검색어가 없으면 모든 경기 표시
-      const grouped: Record<
-        string,
-        Array<Match & { groupId: string; groupName: string }>
-      > = {};
-      sortedMatchesByDate.forEach((match) => {
-        if (!grouped[match.date]) {
-          grouped[match.date] = [];
-        }
-        grouped[match.date].push(match);
+    // 먼저 검색어로 필터링
+    let filtered = sortedMatchesByDate;
+    if (matchSearchQuery) {
+      filtered = sortedMatchesByDate.filter((match) => {
+        return (
+          matchesSearch(match.team1, matchSearchQuery) ||
+          matchesSearch(match.team2, matchSearchQuery)
+        );
       });
-      return grouped;
     }
 
-    // 검색어가 있으면 필터링
-    const filtered = sortedMatchesByDate.filter((match) => {
-      return (
-        matchesSearch(match.team1, matchSearchQuery) ||
-        matchesSearch(match.team2, matchSearchQuery)
-      );
-    });
+    // 날짜로 필터링
+    if (selectedDate) {
+      filtered = filtered.filter((match) => match.date === selectedDate);
+    }
 
+    // 날짜별로 그룹화
     const grouped: Record<
       string,
       Array<Match & { groupId: string; groupName: string }>
@@ -392,10 +378,10 @@ export default function GroupsTab() {
     });
 
     return grouped;
-  }, [sortedMatchesByDate, matchSearchQuery, matchesSearch]);
+  }, [sortedMatchesByDate, matchSearchQuery, selectedDate, matchesSearch]);
 
   return (
-    <div>
+    <div style={{ overflow: 'visible' }}>
       {/* 선수 상세 정보 모달 (경기 상세 모달에서 선수를 클릭한 경우에만 표시) */}
       {/* CountryModal 내부의 PlayerModal과는 별개로, 경기 상세 모달에서 직접 선수를 클릭한 경우를 처리 */}
       <PlayerModal
@@ -445,8 +431,8 @@ export default function GroupsTab() {
           return (
             <div
               className="fixed inset-0 z-[35] flex items-center justify-center p-4"
-              style={{ 
-                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.3)',
                 pointerEvents: 'auto',
               }}
               onClick={() => setSelectedMatch(null)}
@@ -754,26 +740,64 @@ export default function GroupsTab() {
       {/* 전체 경기 일정 섹션 */}
       <div
         id="match-schedule"
-        className="bg-white rounded-lg shadow-lg p-4 md:p-6 min-h-[800px]"
+        className="bg-white rounded-lg shadow-lg p-4 md:p-6 min-h-[800px] relative"
+        style={{ overflow: 'visible' }}
       >
         <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">
           전체 경기 일정
         </h2>
 
-        {/* 경기 일정 검색 입력 */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
-            국가 이름으로 경기 검색
-          </h3>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="국가 이름으로 검색..."
-              value={matchSearchQuery}
-              onChange={(e) => setMatchSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-800"
-            />
-            <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+        {/* 경기 일정 검색 및 날짜 선택 */}
+        <div className={`sticky top-0 bg-white py-4 mb-6 space-y-4 border-2 border-gray-300 rounded-lg shadow-md border-b-4 border-gray-200 px-4 ${selectedMatch ? 'z-[30]' : 'z-50'}`}>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              국가 이름으로 경기 검색
+            </h3>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="국가 이름으로 검색..."
+                value={matchSearchQuery}
+                onChange={(e) => setMatchSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-800"
+              />
+              <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              날짜로 경기 검색
+            </h3>
+            <div className="flex items-center gap-2">
+              <div
+                className="cursor-pointer"
+                onClick={(e) => {
+                  const input = e.currentTarget.querySelector('input[type="date"]') as HTMLInputElement;
+                  if (input) {
+                    input.showPicker?.();
+                    input.focus();
+                  }
+                }}
+              >
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  min="2026-06-11"
+                  max="2026-07-19"
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-800 cursor-pointer w-auto"
+                  style={{ width: 'auto', minWidth: '200px' }}
+                />
+              </div>
+              {selectedDate && (
+                <button
+                  onClick={() => setSelectedDate("")}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors whitespace-nowrap"
+                >
+                  날짜 초기화
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
