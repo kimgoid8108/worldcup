@@ -152,6 +152,28 @@ export const playersByCountry: Record<string, Player[]> = {
     { id: "20", name: "오현규", nameEn: "Oh Hyeon-gyu", position: "FW", age: 24, club: "Celtic" },
     { id: "21", name: "정상빈", nameEn: "Jung Sang-bin", position: "FW", age: 27, club: "Jeonbuk Motors" },
   ],
+  // 🇿🇦 남아프리카공화국 선수
+  southafrica: [
+    // 골키퍼
+    { id: "1", name: "론윈 윌리엄스", nameEn: "Ronwen Williams", position: "GK", age: 32, club: "Mamelodi Sundowns" },
+    { id: "2", name: "비투 멜리", nameEn: "Veli Mothwa", position: "GK", age: 33, club: "AmaZulu" },
+    // 수비수
+    { id: "3", name: "시부시소 모코에나", nameEn: "Sibongiseni Mthethwa", position: "DF", age: 29, club: "Kaizer Chiefs" },
+    { id: "4", name: "그랜트 케크", nameEn: "Grant Kekana", position: "DF", age: 31, club: "Mamelodi Sundowns" },
+    { id: "5", name: "아우브레이 모디바", nameEn: "Aubrey Modiba", position: "DF", age: 29, club: "Mamelodi Sundowns" },
+    { id: "6", name: "테보호 모코에나", nameEn: "Teboho Mokoena", position: "DF", age: 27, club: "Mamelodi Sundowns" },
+    { id: "7", name: "니코스 타바타", nameEn: "Nkosinathi Sibisi", position: "DF", age: 28, club: "Orlando Pirates" },
+    // 미드필더
+    { id: "8", name: "테비조 마세코", nameEn: "Themba Zwane", position: "MF", age: 34, club: "Mamelodi Sundowns" },
+    { id: "9", name: "스파헬레 음쿠", nameEn: "Sphelele Mkhulise", position: "MF", age: 27, club: "Mamelodi Sundowns" },
+    { id: "10", name: "페르시 타우", nameEn: "Percy Tau", position: "MF", age: 30, club: "Al Ahly" },
+    { id: "11", name: "코비 마인", nameEn: "Kobamelo Kodisang", position: "MF", age: 24, club: "Belenenses" },
+    { id: "12", name: "타우다 마셀라", nameEn: "Thapelo Maseko", position: "MF", age: 20, club: "Mamelodi Sundowns" },
+    // 공격수
+    { id: "13", name: "이크람 아우다", nameEn: "Iqraam Rayners", position: "FW", age: 28, club: "Stellenbosch" },
+    { id: "14", name: "자크 모디세", nameEn: "Zakhele Lepasa", position: "FW", age: 27, club: "Orlando Pirates" },
+    { id: "15", name: "테보호 모코에나", nameEn: "Evidence Makgopa", position: "FW", age: 24, club: "Orlando Pirates" },
+  ],
 };
 
 /**

@@ -17,6 +17,8 @@ import { getPlayersByCountry, Player } from "@/data/players";
 import CountryModal from "@/components/modals/CountryModal";
 import PlayerModal from "@/components/modals/PlayerModal";
 import Flag from "@/components/ui/Flag";
+import SquadBuilder, { Formation } from "@/components/squad/SquadBuilder";
+import PlayerList from "@/components/cards/PlayerList";
 
 export default function GroupsTab() {
   // 선택된 국가 ID (국가 모달 표시용)
@@ -39,6 +41,13 @@ export default function GroupsTab() {
 
   // 선택된 경기 (경기 상세 정보 모달 표시용)
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+
+  // 경기 상세 모달의 탭 상태
+  const [matchModalTab, setMatchModalTab] = useState<"squad" | "players" | "stadium">("squad");
+
+  // 경기 상세 모달의 포메이션 상태 (각 팀별로 관리)
+  const [team1Formation, setTeam1Formation] = useState<Formation>("4-3-3");
+  const [team2Formation, setTeam2Formation] = useState<Formation>("4-3-3");
 
   /**
    * 경기장 ID로 경기장 정보 조회
@@ -190,6 +199,15 @@ export default function GroupsTab() {
     },
     []
   );
+
+  // 경기 상세 모달이 열릴 때 탭 상태 초기화
+  useEffect(() => {
+    if (selectedMatch) {
+      setMatchModalTab("squad");
+      setTeam1Formation("4-3-3");
+      setTeam2Formation("4-3-3");
+    }
+  }, [selectedMatch]);
 
   // 경기 상세 모달의 스크롤 제어
   useEffect(() => {
@@ -438,7 +456,7 @@ export default function GroupsTab() {
               onClick={() => setSelectedMatch(null)}
             >
               <div
-                className="modal-content bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+                className="modal-content bg-white rounded-lg shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-y-auto"
                 style={{ pointerEvents: 'auto', position: 'relative', zIndex: 36 }}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -469,10 +487,170 @@ export default function GroupsTab() {
                   </button>
                 </div>
 
+                {/* 탭 네비게이션 */}
+                <div className="flex gap-2 px-6 pt-4 border-b border-gray-200">
+                  <button
+                    onClick={() => setMatchModalTab("squad")}
+                    className={`px-4 py-2 font-semibold transition-colors ${
+                      matchModalTab === "squad"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-gray-800"
+                    }`}
+                  >
+                    스쿼드
+                  </button>
+                  <button
+                    onClick={() => setMatchModalTab("players")}
+                    className={`px-4 py-2 font-semibold transition-colors ${
+                      matchModalTab === "players"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-gray-800"
+                    }`}
+                  >
+                    선수 명단
+                  </button>
+                  <button
+                    onClick={() => setMatchModalTab("stadium")}
+                    className={`px-4 py-2 font-semibold transition-colors ${
+                      matchModalTab === "stadium"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-gray-800"
+                    }`}
+                  >
+                    경기장 정보
+                  </button>
+                </div>
+
                 {/* 모달 내용 */}
                 <div className="p-6 space-y-6">
-                  {/* 경기장 상세 정보 */}
-                  {stadium && (
+                  {/* 스쿼드 탭 */}
+                  {matchModalTab === "squad" && (
+                    <div className="w-full">
+                      {/* 팀 헤더 */}
+                      <div className="flex items-center justify-between mb-4">
+                        {/* 팀1 헤더 */}
+                        {team1 && (
+                          <div className="flex items-center gap-2 flex-1">
+                            {team1 && <Flag country={team1} size="sm" />}
+                            <h4 className="text-base md:text-lg font-semibold text-gray-700 whitespace-nowrap">
+                              {team1Name}
+                            </h4>
+                            <select
+                              value={team1Formation}
+                              onChange={(e) =>
+                                setTeam1Formation(e.target.value as Formation)
+                              }
+                              className="px-2 py-1 rounded-lg border border-gray-300 bg-white text-xs md:text-sm"
+                            >
+                              <option value="4-3-3">4-3-3</option>
+                              <option value="4-4-2">4-4-2</option>
+                            </select>
+                          </div>
+                        )}
+
+                        {/* VS 표시 */}
+                        <div className="px-4">
+                          <span className="text-lg font-bold text-gray-500">VS</span>
+                        </div>
+
+                        {/* 팀2 헤더 */}
+                        {team2 && (
+                          <div className="flex items-center gap-2 flex-1 justify-end">
+                            <select
+                              value={team2Formation}
+                              onChange={(e) =>
+                                setTeam2Formation(e.target.value as Formation)
+                              }
+                              className="px-2 py-1 rounded-lg border border-gray-300 bg-white text-xs md:text-sm"
+                            >
+                              <option value="4-3-3">4-3-3</option>
+                              <option value="4-4-2">4-4-2</option>
+                            </select>
+                            <h4 className="text-base md:text-lg font-semibold text-gray-700 whitespace-nowrap">
+                              {team2Name}
+                            </h4>
+                            {team2 && <Flag country={team2} size="sm" />}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 통합 스쿼드 빌더 */}
+                      {team1 && team2 && (
+                        <SquadBuilder
+                          players={team1Players || []}
+                          formation={team1Formation}
+                          team2Players={team2Players || []}
+                          team2Formation={team2Formation}
+                          onPlayerClick={(player, position, e) => {
+                            if (player && e) {
+                              e.stopPropagation();
+                              setSelectedPlayer(player);
+                              setSelectedPlayerCountryName(team1Name);
+                            }
+                          }}
+                          onTeam2PlayerClick={(player, position, e) => {
+                            if (player && e) {
+                              e.stopPropagation();
+                              setSelectedPlayer(player);
+                              setSelectedPlayerCountryName(team2Name);
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {/* 선수 명단 탭 */}
+                  {matchModalTab === "players" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* 팀1 선수 명단 */}
+                      {team1 && team1Players.length > 0 && (
+                        <div>
+                          <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                            {team1 && <Flag country={team1} size="sm" />}
+                            <span>{team1Name}</span>
+                          </h4>
+                          <div className="bg-gray-50 rounded-lg p-4 max-h-[600px] overflow-y-auto">
+                            <PlayerList
+                              players={team1Players}
+                              onPlayerClick={(player, e) => {
+                                if (e) {
+                                  e.stopPropagation();
+                                }
+                                setSelectedPlayer(player);
+                                setSelectedPlayerCountryName(team1Name);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 팀2 선수 명단 */}
+                      {team2 && team2Players.length > 0 && (
+                        <div>
+                          <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                            {team2 && <Flag country={team2} size="sm" />}
+                            <span>{team2Name}</span>
+                          </h4>
+                          <div className="bg-gray-50 rounded-lg p-4 max-h-[600px] overflow-y-auto">
+                            <PlayerList
+                              players={team2Players}
+                              onPlayerClick={(player, e) => {
+                                if (e) {
+                                  e.stopPropagation();
+                                }
+                                setSelectedPlayer(player);
+                                setSelectedPlayerCountryName(team2Name);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 경기장 정보 탭 */}
+                  {matchModalTab === "stadium" && stadium && (
                     <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
                       <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
                         <span>🏟️</span>
@@ -512,115 +690,18 @@ export default function GroupsTab() {
                           </span>
                         </div>
                       </div>
+                      {stadium.description && (
+                        <div className="mt-4">
+                          <span className="font-semibold text-gray-700">
+                            설명:
+                          </span>
+                          <p className="mt-2 text-gray-800">
+                            {stadium.description}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
-
-                  {/* 선수 명단 */}
-                  <div className="grid grid-cols-2 gap-2 md:gap-4">
-                    {/* 팀1 선수 명단 */}
-                    {team1 && team1Players.length > 0 && (
-                      <div className="bg-gray-50 rounded-lg p-2 md:p-4 border-2 border-gray-200">
-                        <h4 className="text-sm md:text-lg font-bold text-gray-800 mb-2 md:mb-3 flex items-center gap-1 md:gap-2">
-                          {team1 ? (
-                            <Flag country={team1} size="sm" />
-                          ) : (
-                            <span className="text-sm md:text-lg">⚽</span>
-                          )}
-                          <span className="text-xs md:text-base">
-                            {team1Name}
-                          </span>
-                        </h4>
-                        <div className="space-y-1 md:space-y-2 max-h-96 overflow-y-auto">
-                          {team1Players.map((player) => (
-                            <div
-                              key={player.id}
-                              onClick={() => {
-                                setSelectedPlayer(player);
-                                setSelectedPlayerCountryName(team1Name);
-                              }}
-                              className="p-1 md:p-2 bg-white rounded border border-gray-200 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-gray-800 text-xs md:text-sm truncate">
-                                    {player.name}
-                                    {player.nameEn && (
-                                      <span className="text-[10px] md:text-xs font-normal text-gray-600 ml-1 hidden md:inline">
-                                        ({player.nameEn})
-                                      </span>
-                                    )}
-                                  </p>
-                                  <div className="flex items-center gap-1 md:gap-2 text-[10px] md:text-xs text-gray-600 mt-0.5 md:mt-1 flex-wrap">
-                                    <span className="truncate">
-                                      {getPositionName(player.position)}
-                                    </span>
-                                    <span>•</span>
-                                    <span>{player.age}세</span>
-                                    <span className="hidden md:inline">•</span>
-                                    <span className="hidden md:inline truncate">
-                                      {player.club}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 팀2 선수 명단 */}
-                    {team2 && team2Players.length > 0 && (
-                      <div className="bg-gray-50 rounded-lg p-2 md:p-4 border-2 border-gray-200">
-                        <h4 className="text-sm md:text-lg font-bold text-gray-800 mb-2 md:mb-3 flex items-center gap-1 md:gap-2">
-                          {team2 ? (
-                            <Flag country={team2} size="sm" />
-                          ) : (
-                            <span className="text-sm md:text-lg">⚽</span>
-                          )}
-                          <span className="text-xs md:text-base">
-                            {team2Name}
-                          </span>
-                        </h4>
-                        <div className="space-y-1 md:space-y-2 max-h-96 overflow-y-auto">
-                          {team2Players.map((player) => (
-                            <div
-                              key={player.id}
-                              onClick={() => {
-                                setSelectedPlayer(player);
-                                setSelectedPlayerCountryName(team2Name);
-                              }}
-                              className="p-1 md:p-2 bg-white rounded border border-gray-200 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-gray-800 text-xs md:text-sm truncate">
-                                    {player.name}
-                                    {player.nameEn && (
-                                      <span className="text-[10px] md:text-xs font-normal text-gray-600 ml-1 hidden md:inline">
-                                        ({player.nameEn})
-                                      </span>
-                                    )}
-                                  </p>
-                                  <div className="flex items-center gap-1 md:gap-2 text-[10px] md:text-xs text-gray-600 mt-0.5 md:mt-1 flex-wrap">
-                                    <span className="truncate">
-                                      {getPositionName(player.position)}
-                                    </span>
-                                    <span>•</span>
-                                    <span>{player.age}세</span>
-                                    <span className="hidden md:inline">•</span>
-                                    <span className="hidden md:inline truncate">
-                                      {player.club}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
