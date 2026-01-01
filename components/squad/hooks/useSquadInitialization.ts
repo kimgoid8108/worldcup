@@ -12,6 +12,8 @@ import {
   getPlayersByPosition,
   HOME_TEAM_CUSTOM_POSITIONS,
   AWAY_TEAM_CUSTOM_POSITIONS,
+  HOME_TEAM_CUSTOM_POSITIONS_442,
+  AWAY_TEAM_CUSTOM_POSITIONS_442,
 } from "../utils/squadUtils";
 import { PlayerWithImage } from "../PlayerImageCard";
 import { Player } from "@/data/players";
@@ -35,6 +37,9 @@ const calculateHomeTeamPosition = (
   if (formation === "4-3-3" && positionIndex < HOME_TEAM_CUSTOM_POSITIONS.length) {
     return HOME_TEAM_CUSTOM_POSITIONS[positionIndex];
   }
+  if (formation === "4-4-2" && positionIndex < HOME_TEAM_CUSTOM_POSITIONS_442.length) {
+    return HOME_TEAM_CUSTOM_POSITIONS_442[positionIndex];
+  }
   return pos;
 };
 
@@ -48,6 +53,9 @@ const calculateAwayTeamPosition = (
 ): Position => {
   if (formation === "4-3-3" && positionIndex < AWAY_TEAM_CUSTOM_POSITIONS.length) {
     return AWAY_TEAM_CUSTOM_POSITIONS[positionIndex];
+  }
+  if (formation === "4-4-2" && positionIndex < AWAY_TEAM_CUSTOM_POSITIONS_442.length) {
+    return AWAY_TEAM_CUSTOM_POSITIONS_442[positionIndex];
   }
   return pos;
 };

@@ -24,10 +24,10 @@ export const FORMATION_POSITIONS: Record<Formation, Position[]> = {
     // GK
     { x: 50, y: 90 },
     // DF (4명)
-    { x: 25, y: 75 },
-    { x: 50, y: 80 },
-    { x: 75, y: 75 },
-    { x: 50, y: 70 },
+    { x: 20, y: 70 },
+    { x: 40, y: 70 },
+    { x: 60, y: 70 },
+    { x: 80, y: 70 },
     // MF (3명)
     { x: 30, y: 50 },
     { x: 50, y: 50 },
@@ -104,30 +104,60 @@ export const FORMATION_INDICES: Record<
 
 // 홈 팀 커스텀 좌표 (4-3-3 포메이션)
 export const HOME_TEAM_CUSTOM_POSITIONS: Position[] = [
-  { x: 10, y: 50 }, // GK
-  { x: 20, y: 90 }, // DF
-  { x: 20, y: 60 }, // DF
-  { x: 20, y: 40 }, // DF
-  { x: 20, y: 10 }, // DF
-  { x: 30, y: 30 }, // MF
-  { x: 30, y: 50 }, // MF
-  { x: 30, y: 70 }, // MF
-  { x: 40, y: 20 }, // FW
-  { x: 45, y: 50 }, // FW
-  { x: 40, y: 80 }, // FW
+  { x: 5, y: 50 }, // GK
+  { x: 15, y: 85 }, // DF
+  { x: 15, y: 60 }, // DF
+  { x: 15, y: 37 }, // DF
+  { x: 15, y: 14 }, // DF
+  { x: 28, y: 30 }, // MF
+  { x: 28, y: 50 }, // MF
+  { x: 28, y: 70 }, // MF
+  { x: 42, y: 20 }, // FW
+  { x: 42, y: 50 }, // FW
+  { x: 42, y: 80 }, // FW
 ];
 
 // 어웨이 팀 커스텀 좌표 (4-3-3 포메이션)
 export const AWAY_TEAM_CUSTOM_POSITIONS: Position[] = [
   { x: 95, y: 50 }, // GK
-  { x: 85, y: 10 }, // DF
+  { x: 85, y: 15 }, // DF
   { x: 85, y: 40 }, // DF
-  { x: 85, y: 60 }, // DF
-  { x: 85, y: 90 }, // DF
-  { x: 75, y: 30 }, // MF
-  { x: 75, y: 50 }, // MF
-  { x: 75, y: 70 }, // MF
-  { x: 65, y: 80 }, // FW
-  { x: 60, y: 50 }, // FW
-  { x: 65, y: 20 }, // FW
+  { x: 85, y: 63 }, // DF
+  { x: 85, y: 86 }, // DF
+  { x: 72, y: 30 }, // MF
+  { x: 72, y: 50 }, // MF
+  { x: 72, y: 70 }, // MF
+  { x: 58, y: 80 }, // FW
+  { x: 58, y: 50 }, // FW
+  { x: 58, y: 20 }, // FW
+];
+
+// 4-4-2 포메이션 홈팀 커스텀 좌표
+export const HOME_TEAM_CUSTOM_POSITIONS_442: Position[] = [
+  { x: 5, y: 50 }, // GK
+  { x: 15, y: 85 }, // DF
+  { x: 15, y: 60 }, // DF
+  { x: 15, y: 37 }, // DF
+  { x: 15, y: 14 }, // DF
+  { x: 30, y: 37 }, // MF
+  { x: 30, y: 60 }, // MF
+  { x: 30, y: 85 }, // MF
+  { x: 30, y: 15 }, // MF
+  { x: 42, y: 30 }, // FW
+  { x: 42, y: 70 }, // FW
+];
+
+// 4-4-2 포메이션 어웨이팀 커스텀 좌표
+export const AWAY_TEAM_CUSTOM_POSITIONS_442: Position[] = [
+  { x: 95, y: 50 }, // GK
+  { x: 85, y: 15 }, // DF
+  { x: 85, y: 40 }, // DF
+  { x: 85, y: 63 }, // DF
+  { x: 85, y: 86 }, // DF
+  { x: 70, y: 15 }, // MF
+  { x: 70, y: 40 }, // MF
+  { x: 70, y: 63 }, // MF
+  { x: 70, y: 87 }, // MF
+  { x: 58, y: 70 }, // FW
+  { x: 58, y: 30 }, // FW
 ];

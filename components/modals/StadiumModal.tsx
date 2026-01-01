@@ -110,6 +110,26 @@ export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) 
     }
   }, [stadiumId]);
 
+  /**
+   * ESC 키로 모달 닫기
+   */
+  useEffect(() => {
+    if (!stadiumId) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape, true);
+    return () => {
+      window.removeEventListener("keydown", handleEscape, true);
+    };
+  }, [stadiumId, onClose]);
+
   // 경기장 정보가 없으면 모달 표시 안 함
   if (!stadium) return null;
 

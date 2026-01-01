@@ -257,11 +257,14 @@ export default function GroupsTab() {
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        // 다른 모달이 열려있는지 확인
-        const hasOtherModal = document.querySelector('.fixed.inset-0.z-40') !== null ||
-                              document.querySelector('.fixed.inset-0.z-\\[45\\]') !== null;
-
-        if (!hasOtherModal) {
+        // PlayerModal이 열려있으면 먼저 PlayerModal 닫기
+        if (selectedPlayer) {
+          e.preventDefault();
+          e.stopPropagation();
+          setSelectedPlayer(null);
+          setSelectedPlayerCountryName(undefined);
+        } else {
+          // PlayerModal이 없으면 경기 상세 모달 닫기
           e.preventDefault();
           e.stopPropagation();
           setSelectedMatch(null);
@@ -269,11 +272,11 @@ export default function GroupsTab() {
       }
     };
 
-    window.addEventListener("keydown", handleEscape);
+    window.addEventListener("keydown", handleEscape, true);
     return () => {
-      window.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("keydown", handleEscape, true);
     };
-  }, [selectedMatch]);
+  }, [selectedMatch, selectedPlayer]);
 
   // 검색어에 맞는 국가 목록 (국가 이름으로 검색했을 때)
   // 성능 최적화: useMemo로 검색 결과 캐싱
@@ -449,50 +452,56 @@ export default function GroupsTab() {
 
           return (
             <div
-              className="fixed inset-0 z-[35] flex items-center justify-center p-4"
+              className="fixed inset-0 z-[35] flex items-center justify-center p-0 md:p-4"
               style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
                 pointerEvents: 'auto',
+                backdropFilter: 'blur(2px)',
               }}
               onClick={() => setSelectedMatch(null)}
             >
               <div
-                className="modal-content bg-white rounded-lg shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-y-auto"
+                className="modal-content bg-white rounded-none md:rounded-lg shadow-2xl max-w-7xl w-full h-full md:h-auto max-h-full md:max-h-[90vh] overflow-y-auto"
                 style={{ pointerEvents: 'auto', position: 'relative', zIndex: 36 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* 모달 헤더 */}
-                <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between">
-                  <h3 className="text-2xl font-bold flex items-center gap-3">
+                <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 md:p-4 rounded-none md:rounded-t-lg flex items-center justify-between z-10">
+                  <h3 className="text-base md:text-2xl font-bold flex items-center gap-1 md:gap-3 flex-1 min-w-0">
                     {team1 ? (
-                      <Flag country={team1} size="md" />
+                      <Flag country={team1} size="sm" className="md:hidden" />
                     ) : (
-                      <span className="text-2xl">⚽</span>
+                      <span className="text-lg md:text-2xl">⚽</span>
                     )}
-                    <span>{team1Name}</span>
-                    <span className="px-3 py-1 bg-white text-blue-600 rounded-full font-bold text-sm">
+                    <span className="truncate text-xs md:text-base">{team1Name}</span>
+                    <span className="px-2 md:px-3 py-0.5 md:py-1 bg-white text-blue-600 rounded-full font-bold text-xs md:text-sm whitespace-nowrap mx-1 md:mx-0">
                       VS
                     </span>
-                    <span>{team2Name}</span>
+                    <span className="truncate text-xs md:text-base">{team2Name}</span>
                     {team2 ? (
-                      <Flag country={team2} size="md" />
+                      <Flag country={team2} size="sm" className="md:hidden" />
                     ) : (
-                      <span className="text-2xl">⚽</span>
+                      <span className="text-lg md:text-2xl">⚽</span>
                     )}
+                    {/* 데스크톱에서만 표시되는 플래그 */}
+                    <div className="hidden md:flex items-center gap-3">
+                      {team1 && <Flag country={team1} size="md" />}
+                      {team2 && <Flag country={team2} size="md" />}
+                    </div>
                   </h3>
                   <button
                     onClick={() => setSelectedMatch(null)}
-                    className="text-white hover:text-gray-200 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                    className="text-white hover:text-gray-200 text-2xl md:text-3xl font-bold w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-white hover:bg-opacity-20 transition-colors flex-shrink-0 ml-2"
                   >
                     ×
                   </button>
                 </div>
 
                 {/* 탭 네비게이션 */}
-                <div className="flex gap-2 px-6 pt-4 border-b border-gray-200">
+                <div className="flex gap-1 md:gap-2 px-2 md:px-6 pt-3 md:pt-4 border-b border-gray-200 overflow-x-auto">
                   <button
                     onClick={() => setMatchModalTab("squad")}
-                    className={`px-4 py-2 font-semibold transition-colors ${
+                    className={`px-3 md:px-4 py-2 text-sm md:text-base font-semibold transition-colors whitespace-nowrap ${
                       matchModalTab === "squad"
                         ? "text-blue-600 border-b-2 border-blue-600"
                         : "text-gray-600 hover:text-gray-800"
@@ -502,7 +511,7 @@ export default function GroupsTab() {
                   </button>
                   <button
                     onClick={() => setMatchModalTab("players")}
-                    className={`px-4 py-2 font-semibold transition-colors ${
+                    className={`px-3 md:px-4 py-2 text-sm md:text-base font-semibold transition-colors whitespace-nowrap ${
                       matchModalTab === "players"
                         ? "text-blue-600 border-b-2 border-blue-600"
                         : "text-gray-600 hover:text-gray-800"
@@ -512,7 +521,7 @@ export default function GroupsTab() {
                   </button>
                   <button
                     onClick={() => setMatchModalTab("stadium")}
-                    className={`px-4 py-2 font-semibold transition-colors ${
+                    className={`px-3 md:px-4 py-2 text-sm md:text-base font-semibold transition-colors whitespace-nowrap ${
                       matchModalTab === "stadium"
                         ? "text-blue-600 border-b-2 border-blue-600"
                         : "text-gray-600 hover:text-gray-800"
@@ -523,17 +532,17 @@ export default function GroupsTab() {
                 </div>
 
                 {/* 모달 내용 */}
-                <div className="p-6 space-y-6">
+                <div className="p-3 md:p-6 space-y-4 md:space-y-6">
                   {/* 스쿼드 탭 */}
                   {matchModalTab === "squad" && (
                     <div className="w-full">
                       {/* 팀 헤더 */}
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-0 mb-3 md:mb-4">
                         {/* 팀1 헤더 */}
                         {team1 && (
                           <div className="flex items-center gap-2 flex-1">
                             {team1 && <Flag country={team1} size="sm" />}
-                            <h4 className="text-base md:text-lg font-semibold text-gray-700 whitespace-nowrap">
+                            <h4 className="text-sm md:text-lg font-semibold text-gray-700 truncate">
                               {team1Name}
                             </h4>
                             <select
@@ -541,7 +550,7 @@ export default function GroupsTab() {
                               onChange={(e) =>
                                 setTeam1Formation(e.target.value as Formation)
                               }
-                              className="px-2 py-1 rounded-lg border border-gray-300 bg-white text-xs md:text-sm"
+                              className="px-2 py-1 rounded-lg border border-gray-300 bg-white text-xs flex-shrink-0"
                             >
                               <option value="4-3-3">4-3-3</option>
                               <option value="4-4-2">4-4-2</option>
@@ -550,24 +559,24 @@ export default function GroupsTab() {
                         )}
 
                         {/* VS 표시 */}
-                        <div className="px-4">
-                          <span className="text-lg font-bold text-gray-500">VS</span>
+                        <div className="px-2 md:px-4 self-center">
+                          <span className="text-base md:text-lg font-bold text-gray-500">VS</span>
                         </div>
 
                         {/* 팀2 헤더 */}
                         {team2 && (
-                          <div className="flex items-center gap-2 flex-1 justify-end">
+                          <div className="flex items-center gap-2 flex-1 justify-end md:justify-end">
                             <select
                               value={team2Formation}
                               onChange={(e) =>
                                 setTeam2Formation(e.target.value as Formation)
                               }
-                              className="px-2 py-1 rounded-lg border border-gray-300 bg-white text-xs md:text-sm"
+                              className="px-2 py-1 rounded-lg border border-gray-300 bg-white text-xs flex-shrink-0"
                             >
                               <option value="4-3-3">4-3-3</option>
                               <option value="4-4-2">4-4-2</option>
                             </select>
-                            <h4 className="text-base md:text-lg font-semibold text-gray-700 whitespace-nowrap">
+                            <h4 className="text-sm md:text-lg font-semibold text-gray-700 truncate">
                               {team2Name}
                             </h4>
                             {team2 && <Flag country={team2} size="sm" />}
@@ -601,15 +610,15 @@ export default function GroupsTab() {
 
                   {/* 선수 명단 탭 */}
                   {matchModalTab === "players" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                       {/* 팀1 선수 명단 */}
                       {team1 && team1Players.length > 0 && (
                         <div>
-                          <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                          <h4 className="text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
                             {team1 && <Flag country={team1} size="sm" />}
-                            <span>{team1Name}</span>
+                            <span className="truncate">{team1Name}</span>
                           </h4>
-                          <div className="bg-gray-50 rounded-lg p-4 max-h-[600px] overflow-y-auto">
+                          <div className="bg-gray-50 rounded-lg p-3 md:p-4 max-h-[400px] md:max-h-[600px] overflow-y-auto">
                             <PlayerList
                               players={team1Players}
                               onPlayerClick={(player, e) => {
@@ -627,11 +636,11 @@ export default function GroupsTab() {
                       {/* 팀2 선수 명단 */}
                       {team2 && team2Players.length > 0 && (
                         <div>
-                          <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                          <h4 className="text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
                             {team2 && <Flag country={team2} size="sm" />}
-                            <span>{team2Name}</span>
+                            <span className="truncate">{team2Name}</span>
                           </h4>
-                          <div className="bg-gray-50 rounded-lg p-4 max-h-[600px] overflow-y-auto">
+                          <div className="bg-gray-50 rounded-lg p-3 md:p-4 max-h-[400px] md:max-h-[600px] overflow-y-auto">
                             <PlayerList
                               players={team2Players}
                               onPlayerClick={(player, e) => {
@@ -650,12 +659,12 @@ export default function GroupsTab() {
 
                   {/* 경기장 정보 탭 */}
                   {matchModalTab === "stadium" && stadium && (
-                    <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
-                      <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <div className="bg-blue-50 rounded-lg p-3 md:p-4 border-2 border-blue-200">
+                      <h4 className="text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
                         <span>🏟️</span>
                         <span>경기장 정보</span>
                       </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 text-xs md:text-sm">
                         <div>
                           <span className="font-semibold text-gray-700">
                             경기장명:

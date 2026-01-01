@@ -234,16 +234,16 @@ export default function FifaRankingsTab() {
   return (
     <>
       {/* 메인 리스트 - 항상 렌더링되어야 함 (언마운트 방지) */}
-      <div className="bg-white rounded-lg shadow-lg p-4 md:p-6" style={{ position: "relative", zIndex: 1 }}>
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">FIFA 랭킹 순위</h2>
+      <div className="bg-white rounded-lg shadow-lg p-3 md:p-6" style={{ position: "relative", zIndex: 1 }}>
+        <h2 className="text-xl md:text-3xl font-bold mb-4 md:mb-6 text-gray-800 text-center border-b-2 md:border-b-4 border-blue-500 pb-2 md:pb-3">FIFA 랭킹 순위</h2>
 
         {/* 검색 섹션 및 Filters 버튼 */}
-        <div className="max-w-5xl mx-auto mb-4 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <div className="flex-1 max-w-md">
+        <div className="max-w-5xl mx-auto mb-3 md:mb-4 flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between">
+          <div className="flex-1 w-full md:max-w-md">
             <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="팀 이름으로 검색..." />
           </div>
-          <div className="relative">
-            <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="flex items-center gap-2 px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+          <div className="relative w-full md:w-auto">
+            <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 w-full md:w-auto border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm md:text-base">
               <Filter size={16} />
               <span>{selectedContinent === "all" ? "전체" : CONTINENTS.find((c) => c.id === selectedContinent)?.name}</span>
             </button>
@@ -273,7 +273,7 @@ export default function FifaRankingsTab() {
 
         {/* 테이블 컨테이너 */}
         {rankingData.length > 0 ? (
-          <div className="max-w-5xl mx-auto bg-[#f3f3f3] rounded-xl p-4 md:p-6">
+          <div className="max-w-5xl mx-auto bg-[#f3f3f3] rounded-xl p-2 md:p-6">
             {/* 테이블 헤더 */}
             <div className="hidden md:grid gap-4 mb-3 px-4 py-2" style={{ gridTemplateColumns: "50px 1fr 120px 120px 100px 50px" }}>
               <div className="flex items-center justify-center gap-1 cursor-pointer" onClick={() => handleSort("rank")}>
@@ -299,20 +299,20 @@ export default function FifaRankingsTab() {
             </div>
 
             {/* 모바일 헤더 */}
-            <div className="md:hidden grid gap-4 mb-3 px-4 py-2" style={{ gridTemplateColumns: "auto 1fr auto auto" }}>
+            <div className="md:hidden grid gap-2 mb-2 px-2 py-2" style={{ gridTemplateColumns: "35px 1fr 60px 50px" }}>
               <div className="flex items-center justify-center gap-1 cursor-pointer" onClick={() => handleSort("rank")}>
-                <span className="text-sm font-semibold text-gray-500">순위</span>
-                {sortColumn === "rank" && (sortDirection === "asc" ? <ArrowUp size={14} className="text-gray-500" /> : <ArrowDown size={14} className="text-gray-500" />)}
+                <span className="text-xs font-semibold text-gray-500">순위</span>
+                {sortColumn === "rank" && (sortDirection === "asc" ? <ArrowUp size={12} className="text-gray-500" /> : <ArrowDown size={12} className="text-gray-500" />)}
               </div>
-              <div className="flex items-center justify-center">
-                <span className="text-sm font-semibold text-gray-500">팀</span>
+              <div className="flex items-center justify-start">
+                <span className="text-xs font-semibold text-gray-500">팀</span>
               </div>
               <div className="flex items-center justify-center gap-1 cursor-pointer" onClick={() => handleSort("points")}>
-                <span className="text-sm font-semibold text-gray-500">포인트</span>
-                {sortColumn === "points" && (sortDirection === "asc" ? <ArrowUp size={14} className="text-gray-500" /> : <ArrowDown size={14} className="text-gray-500" />)}
+                <span className="text-xs font-semibold text-gray-500">포인트</span>
+                {sortColumn === "points" && (sortDirection === "asc" ? <ArrowUp size={12} className="text-gray-500" /> : <ArrowDown size={12} className="text-gray-500" />)}
               </div>
               <div className="flex items-center justify-center">
-                <span className="text-sm font-semibold text-gray-500">변동</span>
+                <span className="text-xs font-semibold text-gray-500">변동</span>
               </div>
             </div>
 
@@ -329,7 +329,7 @@ export default function FifaRankingsTab() {
                 return (
                   <div
                     key={data.countryId}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow cursor-pointer"
+                    className="bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-100 p-2 md:p-4 hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => handleCountryClick(data.countryId)}>
                     {/* 데스크톱 레이아웃 */}
                     <div className="hidden md:grid gap-4 items-center" style={{ gridTemplateColumns: "50px 1fr 120px 120px 100px 50px" }}>
@@ -372,34 +372,34 @@ export default function FifaRankingsTab() {
                     </div>
 
                     {/* 모바일 레이아웃 */}
-                    <div className="md:hidden grid gap-4 items-center" style={{ gridTemplateColumns: "auto 1fr auto auto" }}>
+                    <div className="md:hidden grid gap-2 items-center" style={{ gridTemplateColumns: "35px 1fr 60px 50px" }}>
                       {/* RK */}
-                      <div className="font-bold text-gray-800 text-center">{data.rank}</div>
+                      <div className="font-bold text-gray-800 text-center text-sm">{data.rank}</div>
 
                       {/* Team */}
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                           <Flag country={country} size="sm" />
                         </div>
                         <span className="font-medium text-gray-800 text-xs truncate whitespace-nowrap flex-1">{country.name}</span>
                       </div>
 
                       {/* Points */}
-                      <div className="text-center font-medium text-gray-800 text-sm">{Math.round(data.totalPoints)}</div>
+                      <div className="text-center font-medium text-gray-800 text-xs">{Math.round(data.totalPoints)}</div>
 
                       {/* +/- */}
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex items-center justify-center gap-0.5">
                         {changeValue === 0 ? (
-                          <span className="text-gray-500 text-sm">-</span>
+                          <span className="text-gray-500 text-xs">-</span>
                         ) : isPositive ? (
                           <>
-                            <ArrowUp size={12} className="text-green-600" />
-                            <span className="text-green-600 font-medium text-sm">{changeValue.toFixed(2)}</span>
+                            <ArrowUp size={10} className="text-green-600" />
+                            <span className="text-green-600 font-medium text-xs">{changeValue.toFixed(1)}</span>
                           </>
                         ) : (
                           <>
-                            <ArrowDown size={12} className="text-red-600" />
-                            <span className="text-red-600 font-medium text-sm">{Math.abs(changeValue).toFixed(2)}</span>
+                            <ArrowDown size={10} className="text-red-600" />
+                            <span className="text-red-600 font-medium text-xs">{Math.abs(changeValue).toFixed(1)}</span>
                           </>
                         )}
                       </div>
@@ -411,9 +411,9 @@ export default function FifaRankingsTab() {
 
             {/* Show full rankings 버튼 */}
             {selectedContinent === "all" && !showAll && rankingData.length > 10 && (
-              <div className="mt-6 text-center">
-                <button onClick={() => setShowAll(true)} className="px-6 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                  Show full rankings
+              <div className="mt-4 md:mt-6 text-center">
+                <button onClick={() => setShowAll(true)} className="px-4 md:px-6 py-2 text-sm md:text-base border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+                  전체 랭킹 보기
                 </button>
               </div>
             )}
