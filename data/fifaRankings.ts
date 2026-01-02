@@ -108,3 +108,40 @@ export const getFifaRank = (countryId: string): number | null => {
   const rank = sortedRankings.findIndex((r) => r.id === countryId);
   return rank >= 0 ? rank + 1 : null;
 };
+
+/**
+ * team.name (영문)으로 FIFA 랭킹 조회
+ * @param teamName - team.name (영문, 예: "Brazil", "South Korea")
+ * @returns { rank: number, points: number } 또는 null
+ */
+export const getFifaRankingByTeamName = (teamName: string): { rank: number; points: number } | null => {
+  if (!teamName) return null;
+
+  // team.name을 countryId로 변환 (소문자, 공백 제거)
+  const normalizedTeamName = teamName.toLowerCase().replace(/\s+/g, "");
+
+  // 특수 케이스 매핑 (pots.ts의 team.name과 일치)
+  const nameMapping: Record<string, string> = {
+    "unitedstates": "usa",
+    "southkorea": "southkorea",
+    "saudiarabia": "saudiarabia",
+    "newzealand": "newzealand",
+    "southafrica": "southafrica",
+    "capeverde": "capeverde",
+    "ivorycoast": "ivorycoast",
+    "curaçao": "curacao",
+    "curacao": "curacao",
+    "congodr": "congodr",
+    "dr congo": "congodr",
+  };
+
+  const countryId = nameMapping[normalizedTeamName] || normalizedTeamName;
+  const points = getFifaRanking(countryId);
+
+  if (points === null) return null;
+
+  const rank = getFifaRank(countryId);
+  if (rank === null) return null;
+
+  return { rank, points };
+};

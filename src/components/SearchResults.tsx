@@ -14,6 +14,8 @@ import { useRouter } from "next/navigation";
 import { normalizeText } from "@/src/utils/normalizeText";
 import { isPlayoffTeam } from "@/src/utils/api";
 import type { TeamStanding } from "@/src/types/api";
+import Flag from "@/components/ui/Flag";
+import { getCountryByTeamName } from "@/data/countries";
 
 interface SearchResultsProps {
   searchQuery: string;
@@ -88,11 +90,17 @@ export default function SearchResults({
             `}
           >
             <div className="flex flex-col items-center justify-center gap-2">
-              <img
-                src={standing.crest}
-                alt={standing.team.name}
-                className="w-12 h-12 object-contain"
-              />
+              {(() => {
+                // team.name으로 직접 country 정보 조회 (data 파일의 countryNameMapping 사용)
+                const country = getCountryByTeamName(standing.team.name);
+                return country ? (
+                  <Flag country={country} size="lg" />
+                ) : (
+                  <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                    <span className="text-xs text-gray-500">{standing.team.name.substring(0, 3)}</span>
+                  </div>
+                );
+              })()}
               <span className="text-sm font-semibold text-gray-800 text-center">
                 {standing.team.name}
               </span>

@@ -11,9 +11,8 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { countries } from "@/data/countries";
 import { getCountryById } from "@/data/countries";
-import { getFifaRanking, getFifaRank } from "@/data/fifaRankings";
+import { getFifaRanking, getFifaRank, fifaRankings } from "@/data/fifaRankings";
 import CountryModal from "@/components/modals/CountryModal";
 import SearchBar from "@/components/search/SearchBar";
 import Flag from "@/components/ui/Flag";
@@ -145,7 +144,7 @@ export default function FifaRankingsTab() {
     if (!country) return false;
 
     // 국가 이름 정규화 후 앞글자부터 시작하는지 확인
-    const normalizedCountryName = normalizeText(country.name);
+    const normalizedCountryName = normalizeText(country.nameKo || "");
     return normalizedCountryName.startsWith(normalizedQuery);
   }, []);
 
@@ -162,8 +161,8 @@ export default function FifaRankingsTab() {
    * FIFA 랭킹 데이터 생성
    */
   const rankingData = useMemo(() => {
-    // 모든 국가 가져오기
-    let allTeams = countries.map((country) => country.id);
+    // fifaRankings의 키(국가 ID)를 사용하여 모든 국가 가져오기
+    let allTeams = Object.keys(fifaRankings);
 
     // 대륙 필터 적용
     if (selectedContinent !== "all") {
@@ -342,7 +341,7 @@ export default function FifaRankingsTab() {
                       {/* Team */}
                       <div className="flex items-center justify-center gap-3">
                         <Flag country={country} size="md" />
-                        <span className="font-medium text-gray-800">{country.name}</span>
+                        <span className="font-medium text-gray-800">{country.nameKo}</span>
                       </div>
 
                       {/* Total Points */}
@@ -384,7 +383,7 @@ export default function FifaRankingsTab() {
                         <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                           <Flag country={country} size="sm" />
                         </div>
-                        <span className="font-medium text-gray-800 text-xs truncate whitespace-nowrap flex-1">{country.name}</span>
+                        <span className="font-medium text-gray-800 text-xs truncate whitespace-nowrap flex-1">{country.nameKo}</span>
                       </div>
 
                       {/* Points */}

@@ -18,8 +18,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ImageSquadBuilder, { Formation } from "@/components/squad/ImageSquadBuilder";
 import { fetchStandings, fetchPlayersByTeamId, isPlayoffTeam } from "@/src/utils/api";
-import type { TeamStanding, PlayersResponse } from "@/src/types/api";
+import type { TeamStanding, FrontPlayersResponse, FrontPlayer } from "@/src/types/api";
 import { normalizeText } from "@/src/utils/normalizeText";
+import Flag from "@/components/ui/Flag";
+import { getCountryByTeamName } from "@/data/countries";
 
 export default function TeamDetailPage() {
   const params = useParams();
@@ -39,8 +41,8 @@ export default function TeamDetailPage() {
   });
 
   const [teamStanding, setTeamStanding] = useState<TeamStanding | null>(null);
-  const [players, setPlayers] = useState<PlayersResponse | null>(null);
-  const [playersList, setPlayersList] = useState<PlayersResponse["players"]>([]);
+  const [players, setPlayers] = useState<FrontPlayersResponse | null>(null);
+  const [playersList, setPlayersList] = useState<FrontPlayer[]>([]);
   const [formation, setFormation] = useState<Formation>("4-3-3");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,49 +118,25 @@ export default function TeamDetailPage() {
           timestamp: new Date().toISOString(),
         });
         const playersData = await fetchPlayersByTeamId(teamId);
+
+        // 변환된 데이터는 이미 FrontPlayersResponse 타입
         console.log("[API Response] players API 응답 수신", {
-          team: playersData.team,
-          playersCount: playersData.players?.length || 0,
-          data: playersData,
+          teamId: playersData.team.id,
+          teamName: playersData.team.name,
+          playersCount: playersData.players.length,
         });
-
-        // API response 구조 확인 및 처리
-        // 실제 API가 { data: { players: [...] } } 구조일 수도 있으므로 체크
-        let actualPlayers: PlayersResponse["players"] = [];
-
-        if (playersData && typeof playersData === 'object') {
-          // PlayersResponse 구조: { team: {...}, players: [...] }
-          if ('players' in playersData && Array.isArray(playersData.players)) {
-            actualPlayers = playersData.players;
-            console.log("[데이터 처리] players 배열 발견", actualPlayers.length);
-          }
-          // data.players 구조일 경우
-          else if ('data' in playersData &&
-                   typeof playersData.data === 'object' &&
-                   playersData.data !== null &&
-                   'players' in playersData.data &&
-                   Array.isArray((playersData.data as any).players)) {
-            actualPlayers = (playersData.data as any).players;
-            console.log("[데이터 처리] data.players 배열 발견", actualPlayers.length);
-          }
-          // 직접 players 배열일 경우
-          else if (Array.isArray(playersData)) {
-            actualPlayers = playersData as any;
-            console.log("[데이터 처리] 직접 배열 구조", actualPlayers.length);
-          }
-        }
 
         console.log("[State 변경] setPlayers, setPlayersList 호출", {
           playersResponse: playersData,
-          playersList: actualPlayers,
-          playersCount: actualPlayers.length,
+          playersList: playersData.players,
+          playersCount: playersData.players.length,
         });
         setPlayers(playersData);
-        setPlayersList(actualPlayers);
+        setPlayersList(playersData.players);
         console.log("[State] players 설정 완료", {
           playersResponse: playersData,
-          playersList: actualPlayers,
-          playersCount: actualPlayers.length,
+          playersList: playersData.players,
+          playersCount: playersData.players.length,
         });
       } catch (err) {
         console.error("[에러] 데이터 로드 실패", {
@@ -252,15 +230,17 @@ export default function TeamDetailPage() {
           </button>
 
           <div className="flex items-center gap-4 mb-4">
-            <img
-              src={teamStanding.crest}
-              alt={teamStanding.team.name}
-              className="w-16 h-16 object-contain"
-              onError={(e) => {
-                console.error("[이미지 에러] 국기 이미지 로드 실패", teamStanding.crest);
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+            {(() => {
+              // team.name으로 직접 country 정보 조회 (data 파일의 countryNameMapping 사용)
+              const country = getCountryByTeamName(teamStanding.team.name);
+              return country ? (
+                <Flag country={country} size="xl" />
+              ) : (
+                <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                  <span className="text-xs text-gray-500">{teamStanding.team.name.substring(0, 3)}</span>
+                </div>
+              );
+            })()}
             <div>
               <h1 className="text-3xl font-bold text-gray-800">
                 {teamStanding.team.name}

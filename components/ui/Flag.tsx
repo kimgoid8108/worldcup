@@ -13,8 +13,11 @@
 import { useState } from "react";
 import { Country } from "@/data/countries";
 
+// Flag 컴포넌트에서 사용하는 Country 타입 (teamId는 선택적)
+type FlagCountry = Omit<Country, "teamId"> & { teamId?: number };
+
 interface FlagProps {
-  country: Country;
+  country: FlagCountry;
   className?: string;
   size?: "sm" | "md" | "lg" | "xl";
 }
@@ -139,14 +142,14 @@ function getFlagImageUrl(code: string): string | null {
 
 export default function Flag({ country, className = "", size = "md" }: FlagProps) {
   // 이미지 URL 생성 (우선순위: flagImageUrl > flagcdn 자동 생성)
-  const flagImageUrl = country.flagImageUrl || getFlagImageUrl(country.code);
+  const flagImageUrl = country.flagImageUrl || (country.code ? getFlagImageUrl(country.code) : null);
   const [hasError, setHasError] = useState(false);
   const sizeConfig = imageSizes[size];
 
   const handleError = () => {
     if (!hasError) {
       setHasError(true);
-      console.warn(`Failed to load flag image for ${country.name} (${country.code}): ${flagImageUrl}`);
+      console.warn(`Failed to load flag image for ${country.nameKo} (${country.code || ""}): ${flagImageUrl}`);
     }
   };
 
@@ -155,10 +158,10 @@ export default function Flag({ country, className = "", size = "md" }: FlagProps
     return (
       <div
         className={`${imageSizeClasses[size]} ${className} bg-gray-200 rounded flex items-center justify-center`}
-        title={`${country.name} 국기 (이미지 로드 실패)`}
+        title={`${country.nameKo} 국기 (이미지 로드 실패)`}
         style={{ width: sizeConfig.width, height: sizeConfig.height }}
       >
-        <span className="text-xs text-gray-500">{country.code}</span>
+        <span className="text-xs text-gray-500">{country.code || ""}</span>
       </div>
     );
   }
@@ -166,7 +169,7 @@ export default function Flag({ country, className = "", size = "md" }: FlagProps
   return (
     <img
       src={flagImageUrl}
-      alt={`${country.name} 국기`}
+      alt={`${country.nameKo} 국기`}
       width={sizeConfig.width}
       height={sizeConfig.height}
       className={`${imageSizeClasses[size]} object-contain ${className}`}

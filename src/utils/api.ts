@@ -1,10 +1,10 @@
 /**
  * API 클라이언트 유틸 함수
  *
- * 책임 분리 원칙:
- * - standings: 국가 메타 정보만
- * - teams: 전체 참가국 목록
- * - teams/:id/players: 선수 정보 (유일한 선수 데이터 소스)
+ * ⚠️ 중요 아키텍처 결정:
+ * - 백엔드(API)는 "포트(Pots) 화면"에서만 사용
+ * - 조별 경기(Group Matches), FIFA 랭킹, 국가 기본 정보는 프론트 data 파일로 관리
+ * - 선수 명단 API는 완전 비활성화
  *
  * 환경변수:
  * - NEXT_PUBLIC_API_BASE_URL: Railway 백엔드 API URL
@@ -12,86 +12,154 @@
  */
 
 import type {
-  StandingsResponse,
   TeamsResponse,
+  FrontTeam,
   PlayersResponse,
+  FrontPlayersResponse,
 } from "@/src/types/api";
+import { mapApiTeams, mapApiPlayersResponse } from "./apiMappers";
 
 /**
  * API Base URL 가져오기
  * 환경변수 누락 시 경고 및 기본값 반환
+ *
+ * 주의사항:
+ * - NEXT_PUBLIC_ 접두사가 있는 환경 변수는 빌드 타임에 클라이언트 번들에 주입됨
+ * - 환경 변수 변경 후 개발 서버 재시작 필요 (npm run dev 재실행)
+ * - Vercel 배포 시 환경 변수는 Settings > Environment Variables에서 설정
  */
 function getApiBaseUrl(): string {
+  // 실행 환경 감지
+  const isClient = typeof window !== "undefined";
+  const isServer = typeof window === "undefined";
+  const env = process.env.NODE_ENV;
+  const isVercel = process.env.VERCEL === "1";
+
+  console.log("[ENV CHECK] 환경 변수 확인 시작", {
+    isClient,
+    isServer,
+    env,
+    isVercel,
+    hasEnvVar: !!process.env.NEXT_PUBLIC_API_BASE_URL,
+  });
+
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+  // 환경 변수 미설정 체크
   if (!apiBaseUrl) {
-    console.warn(
-      "[API Config] NEXT_PUBLIC_API_BASE_URL이 설정되지 않았습니다.\n" +
-      "로컬 개발: .env.local 파일에 NEXT_PUBLIC_API_BASE_URL을 설정하세요.\n" +
-      "예: NEXT_PUBLIC_API_BASE_URL=https://worldcupback-production.up.railway.app"
-    );
-    // 개발 환경에서는 기본값 사용하지 않고 명시적으로 에러 발생
-    if (process.env.NODE_ENV === "development") {
+    const errorMsg =
+      "[ENV ERROR] NEXT_PUBLIC_API_BASE_URL 환경 변수가 설정되지 않았습니다.\n" +
+      `실행 환경: ${isClient ? "클라이언트" : "서버"} / ${env}\n` +
+      (isVercel
+        ? "Vercel 배포 환경: Vercel 대시보드 > Settings > Environment Variables에서 설정하세요.\n"
+        : "로컬 개발: .env.local 파일에 NEXT_PUBLIC_API_BASE_URL을 설정하고 개발 서버를 재시작하세요.\n") +
+      "예: NEXT_PUBLIC_API_BASE_URL=https://worldcupback-production.up.railway.app\n" +
+      "⚠️ 환경 변수 변경 후 반드시 개발 서버를 재시작해야 합니다 (npm run dev 재실행)";
+
+    console.error(errorMsg);
+
+    // 개발 환경에서는 명시적으로 에러 발생
+    if (env === "development") {
       throw new Error(
-        "NEXT_PUBLIC_API_BASE_URL 환경변수가 설정되지 않았습니다. .env.local 파일을 확인하세요."
+        "NEXT_PUBLIC_API_BASE_URL 환경변수가 설정되지 않았습니다.\n" +
+        ".env.local 파일을 확인하고 개발 서버를 재시작하세요."
       );
     }
-    // 프로덕션에서는 빈 문자열 반환 (에러 발생)
+
+    // 프로덕션에서는 빈 문자열 반환 (빈 URL로 인한 fetch 실패)
     return "";
   }
 
-  // URL 끝의 슬래시 제거
-  return apiBaseUrl.replace(/\/$/, "");
+  // 환경 변수는 설정되었지만 빈 문자열인 경우
+  if (apiBaseUrl.trim() === "") {
+    console.error("[ENV ERROR] NEXT_PUBLIC_API_BASE_URL이 빈 문자열입니다.");
+    return "";
+  }
+
+  // URL 형식 검증 (http:// 또는 https://로 시작해야 함)
+  const trimmedUrl = apiBaseUrl.trim().replace(/\/$/, "");
+  if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
+    console.error(
+      "[ENV ERROR] NEXT_PUBLIC_API_BASE_URL 형식이 올바르지 않습니다.",
+      {
+        provided: apiBaseUrl,
+        expected: "http:// 또는 https://로 시작해야 합니다.",
+      }
+    );
+    throw new Error(
+      `NEXT_PUBLIC_API_BASE_URL 형식이 올바르지 않습니다: ${apiBaseUrl}`
+    );
+  }
+
+  // 환경 변수 정상 주입 확인 로그
+  console.log("[ENV OK] 환경 변수 정상 주입 확인", {
+    apiBaseUrl: trimmedUrl,
+    isClient,
+    isServer,
+    env,
+    isVercel,
+    note: "환경 변수 변경 후 개발 서버 재시작 필요",
+  });
+
+  return trimmedUrl;
 }
 
 /**
  * API 엔드포인트 URL 생성
  * 절대경로 기반으로 동작 (로컬/배포 환경 모두 동일)
  *
- * @param path - API 경로 (예: "/worldcup/standings")
+ * ⚠️ 모든 API 경로에 /api prefix가 자동으로 추가됩니다
+ * 예: "/worldcup/teams" → "/api/worldcup/teams"
+ *
+ * @param path - API 경로 (예: "/worldcup/teams")
  * @returns 완전한 API URL
  */
 function buildApiUrl(path: string): string {
   const baseUrl = getApiBaseUrl();
-  const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${baseUrl}${cleanPath}`;
-}
 
-/**
- * standings API 호출
- * GET /worldcup/standings
- *
- * @returns 조별 포진 정보 (국가 메타 정보만, 선수 정보 없음)
- */
-export async function fetchStandings(): Promise<StandingsResponse> {
-  const url = buildApiUrl("/worldcup/standings");
-  console.log("[API 호출] fetchStandings", { url });
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
+  // baseUrl이 빈 문자열이면 에러
+  if (!baseUrl) {
     throw new Error(
-      `Failed to fetch standings: ${response.status} ${response.statusText}`
+      "API Base URL이 설정되지 않았습니다. NEXT_PUBLIC_API_BASE_URL 환경 변수를 확인하세요."
     );
   }
 
-  return response.json();
+  // 경로 정규화 (앞에 /가 없으면 추가)
+  let cleanPath = path.startsWith("/") ? path : `/${path}`;
+
+  // /api prefix가 없으면 추가
+  if (!cleanPath.startsWith("/api")) {
+    cleanPath = `/api${cleanPath}`;
+  }
+
+  const fullUrl = `${baseUrl}${cleanPath}`;
+
+  console.log("[API URL] API URL 생성", {
+    baseUrl,
+    path,
+    cleanPath,
+    fullUrl,
+    note: "절대경로 사용, /api prefix 자동 추가",
+  });
+
+  return fullUrl;
 }
 
 /**
- * teams API 호출
- * GET /worldcup/teams
+ * 포트(Pots) 팀 API 호출
+ * GET /api/worldcup/teams
  *
- * @returns 전체 참가국 목록 (선수 정보 없음)
+ * ⚠️ 중요: 이 함수는 포트(Pots) 화면에서만 사용됩니다.
+ * - 포트별 팀 정보 표시용
+ * - team.id 기준으로 매칭
+ * - 국기: team.crest
+ * - 국가명: team.name (영문)
+ *
+ * @returns 전체 참가국 목록 (선수 정보 없음) - 프론트엔드 타입으로 변환된 데이터
  */
-export async function fetchTeams(): Promise<TeamsResponse> {
+export async function fetchPotsTeams(): Promise<{ teams: FrontTeam[] }> {
   const url = buildApiUrl("/worldcup/teams");
-  console.log("[API 호출] fetchTeams", { url });
+  console.log("[API 호출] fetchPotsTeams", { url });
 
   const response = await fetch(url, {
     method: "GET",
@@ -102,59 +170,154 @@ export async function fetchTeams(): Promise<TeamsResponse> {
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch teams: ${response.status} ${response.statusText}`
+      `Failed to fetch pots teams: ${response.status} ${response.statusText}`
     );
   }
 
-  return response.json();
+  const apiResponse: TeamsResponse = await response.json();
+
+  // 프론트엔드 타입으로 변환
+  const teams = mapApiTeams(apiResponse.teams);
+
+  console.log("[API 변환] fetchPotsTeams 변환 완료", {
+    originalCount: apiResponse.teams?.length || 0,
+    mappedCount: teams.length,
+  });
+
+  return { teams };
+}
+
+/* ============================================
+ * 선수 관련 API
+ * ============================================
+ *
+ * ⚠️ 중요: 선수 명단 API는 포트(Pots) 화면에서만 사용됩니다.
+ */
+
+// 선수 데이터 캐시 관련 코드
+interface CacheEntry {
+  data: FrontPlayersResponse;
+  timestamp: number;
+}
+
+const playersCache = new Map<number, CacheEntry>();
+const CACHE_TTL = 5 * 60 * 1000; // 5분
+
+let lastRequestTime = 0;
+const REQUEST_DELAY = 500; // 500ms
+
+/**
+ * 요청 간격 제어 (API 부하 방지)
+ */
+async function waitForRequestDelay(): Promise<void> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  if (timeSinceLastRequest < REQUEST_DELAY) {
+    const waitTime = REQUEST_DELAY - timeSinceLastRequest;
+    await new Promise((resolve) => setTimeout(resolve, waitTime));
+  }
+  lastRequestTime = Date.now();
 }
 
 /**
- * players API 호출
- * GET /worldcup/teams/:id/players
+ * team.id로 선수 명단 조회
+ * GET /api/worldcup/teams/:id/players
  *
- * 유일한 선수 데이터 소스
- * 로컬/배포 환경 모두에서 동일하게 동작 (절대경로 기반)
+ * ⚠️ 중요: 이 함수는 포트(Pots) 화면에서만 사용됩니다.
  *
- * @param teamId - 국가 ID (team.id)
- * @returns 국가별 선수단 정보
- * @throws team.id가 null이거나 유효하지 않은 경우
+ * @param teamId - team.id (number)
+ * @param fallbackTeam - API 실패 시 사용할 fallback 팀 정보
+ * @returns 선수 명단 데이터 (프론트엔드 타입으로 변환된 데이터)
  */
 export async function fetchPlayersByTeamId(
-  teamId: number
-): Promise<PlayersResponse> {
-  if (teamId === null || teamId === undefined || isNaN(teamId)) {
-    throw new Error("Invalid team ID: team.id cannot be null or undefined");
+  teamId: number,
+  fallbackTeam?: { id: number; name: string; crest: string }
+): Promise<FrontPlayersResponse> {
+  // 캐시 확인
+  const cached = playersCache.get(teamId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log("[API 캐시] 선수 데이터 캐시 사용", { teamId });
+    return cached.data;
   }
+
+  // 요청 간격 제어
+  await waitForRequestDelay();
 
   const url = buildApiUrl(`/worldcup/teams/${teamId}/players`);
   console.log("[API 호출] fetchPlayersByTeamId", { teamId, url });
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error(`Team not found: ${teamId}`);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch players: ${response.status} ${response.statusText}`
+      );
     }
-    throw new Error(
-      `Failed to fetch players: ${response.status} ${response.statusText}`
+
+    const apiResponse: PlayersResponse = await response.json();
+
+    // 프론트엔드 타입으로 변환
+    const mappedData = mapApiPlayersResponse(
+      apiResponse,
+      teamId,
+      fallbackTeam
     );
+
+    if (!mappedData) {
+      throw new Error("선수 데이터 변환 실패");
+    }
+
+    // 캐시 저장
+    playersCache.set(teamId, {
+      data: mappedData,
+      timestamp: Date.now(),
+    });
+
+    console.log("[API 변환] fetchPlayersByTeamId 변환 완료", {
+      teamId: mappedData.team.id,
+      teamName: mappedData.team.name,
+      playersCount: mappedData.players.length,
+    });
+
+    return mappedData;
+  } catch (error) {
+    console.error("[API 에러] fetchPlayersByTeamId 실패", { teamId, error });
+
+    // fallbackTeam이 있으면 빈 선수 목록과 함께 반환
+    if (fallbackTeam) {
+      return {
+        team: fallbackTeam,
+        players: [],
+        supported: false,
+      };
+    }
+
+    throw error;
   }
-
-  return response.json();
 }
 
-/**
- * 플레이오프 국가 여부 확인
+/* ============================================
+ * Standings/FIFA Rankings API - 완전 비활성화
+ * ============================================
  *
- * @param teamId - 국가 ID
- * @returns 플레이오프 국가 여부 (team.id === null)
+ * ⚠️ 중요: 조별 경기 및 FIFA 랭킹은 data 파일로 관리합니다.
+ * 아래 코드는 참고용으로 주석 처리되어 있습니다.
  */
-export function isPlayoffTeam(teamId: number | null): boolean {
-  return teamId === null;
+
+/*
+export async function fetchStandings(): Promise<StandingsResponse> {
+  // Standings API 비활성화 - data/groups.ts 사용
+  throw new Error("Standings API는 현재 사용하지 않습니다. data/groups.ts를 사용하세요.");
 }
+
+export async function fetchFifaRankings(): Promise<FifaRankingsResponse> {
+  // FIFA Rankings API 비활성화 - data/fifaRankings.ts 사용
+  throw new Error("FIFA Rankings API는 현재 사용하지 않습니다. data/fifaRankings.ts를 사용하세요.");
+}
+*/

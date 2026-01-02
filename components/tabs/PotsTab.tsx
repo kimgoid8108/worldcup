@@ -2,265 +2,309 @@
  * PotsTab 컴포넌트
  *
  * 용도: 포트별 팀 정보를 표시하는 탭 컴포넌트
- * - 각 포트별 참가 팀 표시
- * - 팀 클릭 시 팀 상세 정보 표시: 국기, 주요 선수 명단, FIFA 랭킹
- * - 검색 기능: 팀 이름 및 선수 이름으로 검색 가능
+ * - 각 포트별 참가 팀 표시 (국기 + 국가명)
+ * - 검색 기능: 팀 이름으로 검색 가능
  * - 필터 기능: 특정 포트만 보기
+ *
+ * ⚠️ 중요:
+ * - 포트 화면에서는 선수 API를 절대 호출하지 않음
+ * - 모든 매칭은 team.id(number) 하나로 통일
+ * - team.name으로 매칭한 후 team.id로 변환하여 사용
  */
 
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { pots } from "@/data/pots";
-import { getCountryById } from "@/data/countries";
-import { getPlayersByCountry } from "@/data/players";
-import CountryModal from "@/components/modals/CountryModal";
+import { getCountryByTeamId, createCountriesFromTeams, type Country } from "@/data/countries";
 import Flag from "@/components/ui/Flag";
 import { normalizeText } from "@/src/utils/normalizeText";
-import { fetchStandings, fetchPlayersByTeamId, isPlayoffTeam } from "@/src/utils/api";
-import type { TeamStanding, PlayersResponse } from "@/src/types/api";
+import { fetchPotsTeams, fetchPlayersByTeamId } from "@/src/utils/api";
+import { getTeamById } from "@/src/utils/team";
+import { getFifaRankingByTeamName } from "@/data/fifaRankings";
+import type { FrontTeam, FrontPlayersResponse } from "@/src/types/api";
+import PlayerList from "@/components/cards/PlayerList";
+import { type Player } from "@/types/player";
+import PlayerModal from "@/components/modals/PlayerModal";
 
 export default function PotsTab() {
-  // 선택된 국가 ID (국가 모달 표시용)
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   // 검색어
   const [searchQuery, setSearchQuery] = useState("");
-  // 선택된 포트 필터 (null이면 전체 표시)
-  const [selectedPotFilter, setSelectedPotFilter] = useState<number | null>(null);
+  // 선택된 포트 필터 (기본값: 첫 번째 포트)
+  const [selectedPotFilter, setSelectedPotFilter] = useState<number | null>(pots[0]?.id ?? null);
 
-  // 선수 명단 표시용: 선택된 teamId (number)
+  // FIFA 랭킹은 로컬 데이터 사용 (API 호출 제거)
+
+  // teams API 데이터 로드 (기준 데이터: team.id, name, crest)
+  const [teams, setTeams] = useState<FrontTeam[]>([]);
+  const [teamsLoaded, setTeamsLoaded] = useState(false);
+  const [teamsError, setTeamsError] = useState<string | null>(null);
+
+  // 동적으로 생성된 countries 배열 (API teams 데이터 기반)
+  const [countriesList, setCountriesList] = useState<Country[]>([]);
+
+  // 선수 명단 관련 상태
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
-  const [selectedTeamStanding, setSelectedTeamStanding] = useState<TeamStanding | null>(null);
-  const [players, setPlayers] = useState<PlayersResponse | null>(null);
-  const [playersList, setPlayersList] = useState<PlayersResponse["players"]>([]);
-  const [loadingPlayers, setLoadingPlayers] = useState(false);
+  const [playersData, setPlayersData] = useState<FrontPlayersResponse | null>(null);
+  const [playersLoading, setPlayersLoading] = useState(false);
+  const [playersError, setPlayersError] = useState<string | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   /**
-   * 플레이오프 승자 ID를 한글 이름으로 변환
+   * 팀이 검색어와 일치하는지 확인 (팀 이름으로 검색)
+   * ⚠️ 중요: 검색은 UI 표시용 한글 이름으로만 수행됩니다.
+   * team.id를 기준으로 country 정보를 조회하여 검색합니다.
    */
-  const getPlayoffName = (playoffId: string): string => {
-    const playoffNames: Record<string, string> = {
-      playoff_europe_d: "유럽 플레이오프 D조 승자",
-      playoff_europe_a: "유럽 플레이오프 A조 승자",
-      playoff_europe_c: "유럽 플레이오프 C조 승자",
-      playoff_europe_b: "유럽 플레이오프 B조 승자",
-      playoff_fifa_1: "FIFA 플레이오프 1조 승자",
-      playoff_fifa_2: "FIFA 플레이오프 2조 승자",
-      playoff_intercontinental_1: "인터콘티넨털 플레이오프 1조 승자",
-      playoff_intercontinental_2: "인터콘티넨털 플레이오프 2조 승자",
-      // 하위 호환성
-      playoff_europe: "유럽 플레이오프 승자",
-      playoff_a: "플레이오프 A 승자",
-      playoff_b: "플레이오프 B 승자",
-      playoff_c: "플레이오프 C 승자",
-      playoff_1: "플레이오프 1 승자",
-      playoff_2: "플레이오프 2 승자",
-    };
-    return playoffNames[playoffId] || "플레이오프 승자";
-  };
+  const matchesSearch = useCallback(
+    (teamId: number | null, query: string): boolean => {
+      if (!query || !teamId) return true;
 
-  /**
-   * 플레이오프에 참가하는 국가 목록 조회
-   */
-  const getPlayoffParticipants = (playoffId: string): string[] => {
-    // pots.ts의 플레이오프 ID를 실제 플레이오프 ID로 매핑
-    const playoffIdMap: Record<string, string> = {
-      playoff_europe_1: "playoff_europe_d",
-      playoff_europe_2: "playoff_europe_a",
-      playoff_europe_3: "playoff_europe_c",
-      playoff_europe_4: "playoff_europe_b",
-      playoff_intercontinental_1: "playoff_fifa_1",
-      playoff_intercontinental_2: "playoff_fifa_2",
-    };
+      // 검색어 정규화 (NFC, 모든 whitespace 제거, 소문자 변환)
+      const normalizedQuery = normalizeText(query);
 
-    const actualPlayoffId = playoffIdMap[playoffId] || playoffId;
-
-    const participants: Record<string, string[]> = {
-      // 유럽 플레이오프
-      playoff_europe_d: ["denmark", "northmacedonia", "czechrepublic", "ireland"],
-      playoff_europe_a: ["italy", "northernireland", "wales", "bosnia"],
-      playoff_europe_c: ["turkiye", "romania", "slovakia", "kosovo"],
-      playoff_europe_b: ["ukraine", "sweden", "poland", "albania"],
-      // FIFA 플레이오프
-      playoff_fifa_2: ["bolivia", "suriname", "iraq"],
-      playoff_fifa_1: ["newcaledonia", "jamaica", "congodr"],
-      // 하위 호환성
-      playoff_europe: ["scotland", "norway", "sweden", "denmark", "poland", "turkiye"],
-      playoff_a: ["ghana", "capeverde", "ivorycoast", "algeria"],
-      playoff_b: ["uzbekistan", "jordan", "thailand", "vietnam"],
-      playoff_c: ["newzealand", "panama", "jamaica", "costa"],
-      playoff_1: ["china", "india", "saudiarabia", "uae"],
-      playoff_2: ["russia", "iran", "qatar", "egypt"],
-    };
-    return participants[actualPlayoffId] || [];
-  };
-
-  /**
-   * 팀이 검색어와 일치하는지 확인 (팀 이름 또는 선수 이름으로 검색)
-   * 띄어쓰기를 제거하고 검색 (예: "손 흥민" → "손흥민"으로 검색)
-   * 국가 이름 검색은 앞글자부터 시작해야 함 (startsWith 기반)
-   * normalizeText를 사용하여 유니코드 정규화 및 whitespace 제거
-   */
-  const matchesSearch = (teamId: string, query: string): boolean => {
-    if (!query) return true;
-
-    // 검색어 정규화 (NFC, 모든 whitespace 제거, 소문자 변환)
-    const normalizedQuery = normalizeText(query);
-
-    const country = getCountryById(teamId);
-    if (!country) {
-      // 플레이오프 승자는 검색어가 포함되어 있으면 표시
-      const playoffName = normalizeText(getPlayoffName(teamId));
-      return playoffName.includes(normalizedQuery);
-    }
-
-    // 팀 이름으로 검색 (앞글자부터 시작해야 함)
-    const normalizedCountryName = normalizeText(country.name);
-    if (normalizedCountryName.startsWith(normalizedQuery)) {
-      return true;
-    }
-
-    // 선수 이름으로 검색 - 한국어 및 영어 모두 검색
-    const players = getPlayersByCountry(teamId);
-    return players.some((player) => {
-      const normalizedPlayerName = normalizeText(player.name);
-      const normalizedPlayerNameEn = player.nameEn ? normalizeText(player.nameEn) : "";
-      return normalizedPlayerName.includes(normalizedQuery) || normalizedPlayerNameEn.includes(normalizedQuery);
-    });
-  };
-
-  // standings API 데이터 로드 (국가 메타 정보)
-  const [standings, setStandings] = useState<TeamStanding[]>([]);
-  const [standingsLoaded, setStandingsLoaded] = useState(false);
-
-  useEffect(() => {
-    async function loadStandings() {
-      try {
-        console.log("[PotsTab] standings API 호출 시작");
-        const standingsData = await fetchStandings();
-        console.log("[PotsTab] standings API 응답 수신", {
-          count: standingsData.standings?.length || 0,
-        });
-        setStandings(standingsData.standings || []);
-        setStandingsLoaded(true);
-      } catch (err) {
-        console.error("[PotsTab] standings API 호출 실패", err);
-      }
-    }
-    loadStandings();
-  }, []);
-
-  // selectedTeamId 변경 시 players API 호출
-  useEffect(() => {
-    async function loadPlayers() {
-      // selectedTeamId가 null/undefined/0이거나 플레이오프 국가인 경우 fetch 실행 안 함
-      if (!selectedTeamId || selectedTeamId === 0 || isPlayoffTeam(selectedTeamId)) {
-        setPlayers(null);
-        setPlayersList([]);
-        setLoadingPlayers(false);
-        return;
+      // country 정보는 UI 표시용으로만 조회
+      const country = getCountryByTeamId(teamId, countriesList);
+      if (!country) {
+        return false;
       }
 
-      try {
-        console.log("FETCH PLAYERS", {
-          teamId: selectedTeamId,
-        });
-        setLoadingPlayers(true);
-        setPlayers(null);
-        setPlayersList([]);
+      // 팀 이름으로 검색 (앞글자부터 시작해야 함)
+      const normalizedCountryName = normalizeText(country.nameKo || "");
+      return normalizedCountryName.startsWith(normalizedQuery);
+    },
+    [countriesList]
+  );
 
-        const playersData = await fetchPlayersByTeamId(selectedTeamId);
-
-        console.log("PLAYERS DATA", {
-          team: playersData.team,
-          playersCount: playersData.players?.length || 0,
-          data: playersData,
-        });
-
-        // API response 구조 확인 및 처리
-        let actualPlayers: PlayersResponse["players"] = [];
-        if (playersData && typeof playersData === 'object') {
-          if ('players' in playersData && Array.isArray(playersData.players)) {
-            actualPlayers = playersData.players;
-          } else if ('data' in playersData &&
-                     typeof playersData.data === 'object' &&
-                     playersData.data !== null &&
-                     'players' in playersData.data &&
-                     Array.isArray((playersData.data as any).players)) {
-            actualPlayers = (playersData.data as any).players;
-          } else if (Array.isArray(playersData)) {
-            actualPlayers = playersData as any;
-          }
+  /**
+   * 모달 열림/닫힘 시 배경 스크롤 제어
+   * - 모달이 열리면 배경 스크롤만 잠금 (배경은 보이도록 유지)
+   * - 모달이 닫히면 스크롤 복원
+   * - wheel/touchmove 이벤트로 배경 스크롤만 차단
+   * - 모달 내부에서 스크롤이 끝에 도달해도 배경 스크롤 방지
+   */
+  useEffect(() => {
+    if (selectedTeamId) {
+      /**
+       * 배경 스크롤 완전 차단 함수
+       * 모달 내부(.modal-content)가 아닌 영역의 스크롤을 완전히 차단
+       * 모달 내부에서 스크롤이 끝에 도달해도 배경 스크롤 방지
+       */
+      const preventScroll = (e: WheelEvent | TouchEvent) => {
+        // e.target이 Element인지 확인
+        if (!(e.target instanceof Element)) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
         }
 
-        setPlayers(playersData);
-        setPlayersList(actualPlayers);
-      } catch (err) {
-        console.error("[PotsTab] players API 호출 실패", {
-          error: err,
-          teamId: selectedTeamId,
-        });
-        setPlayers(null);
-        setPlayersList([]);
-      } finally {
-        setLoadingPlayers(false);
-      }
-    }
+        const target = e.target as HTMLElement;
+        const modalContent = target.closest(".modal-content") as HTMLElement;
 
-    loadPlayers();
+        // 모달 내부가 아닌 경우 무조건 스크롤 차단
+        if (!modalContent) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+
+        // 모달 내부인 경우, 스크롤이 끝에 도달했는지 확인
+        if (modalContent) {
+          const { scrollTop, scrollHeight, clientHeight } = modalContent;
+          const isScrollAtTop = scrollTop === 0;
+          const isScrollAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+          // wheel 이벤트인 경우
+          if (e instanceof WheelEvent) {
+            const deltaY = e.deltaY;
+
+            // 위로 스크롤하려고 할 때 이미 맨 위에 있으면 배경 스크롤 방지
+            if (deltaY < 0 && isScrollAtTop) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+
+            // 아래로 스크롤하려고 할 때 이미 맨 아래에 있으면 배경 스크롤 방지
+            if (deltaY > 0 && isScrollAtBottom) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+          }
+
+          // touchmove 이벤트인 경우 (터치 스크롤이 끝에 도달했을 때 배경 스크롤 방지)
+          if (e instanceof TouchEvent && (isScrollAtTop || isScrollAtBottom)) {
+            // 모달 내부 스크롤이 끝에 도달했을 때는 배경 스크롤 방지
+            // 다만 실제 터치 스크롤은 모달 내부에서만 동작하도록 함
+          }
+        }
+      };
+
+      // 전역 스크롤 이벤트 리스너 추가 (여러 이벤트 타입)
+      window.addEventListener("wheel", preventScroll, { passive: false, capture: true });
+      window.addEventListener("touchmove", preventScroll, { passive: false, capture: true });
+      document.addEventListener("wheel", preventScroll, { passive: false, capture: true });
+      document.addEventListener("touchmove", preventScroll, { passive: false, capture: true });
+
+      // cleanup: 모달 닫힐 때 이벤트 리스너 제거
+      return () => {
+        window.removeEventListener("wheel", preventScroll, true);
+        window.removeEventListener("touchmove", preventScroll, true);
+        document.removeEventListener("wheel", preventScroll, true);
+        document.removeEventListener("touchmove", preventScroll, true);
+      };
+    }
   }, [selectedTeamId]);
 
-  // 국가 클릭 핸들러: countryId (string) → teamId (number) 변환
-  const handleCountryClick = useCallback((countryId: string) => {
-    // standings에서 해당 국가의 team.id 찾기
-    const standing = standings.find((s) => {
-      const country = getCountryById(countryId);
-      if (!country) return false;
-      return s.team.name === country.name;
-    });
+  // 포트 팀 API 데이터 로드
+  useEffect(() => {
+    async function loadTeams() {
+      try {
+        console.log("[PotsTab] Pots Teams API 호출 시작");
+        setTeamsError(null);
+        const teamsData = await fetchPotsTeams();
+        console.log("[PotsTab] Pots Teams API 응답 수신", {
+          teamsCount: teamsData.teams?.length || 0,
+        });
 
-    if (standing && standing.team.id !== null) {
-      console.log("SELECT TEAM ID", {
-        countryId,
-        teamId: standing.team.id,
-        teamName: standing.team.name,
-      });
-      setSelectedTeamId(standing.team.id);
-      setSelectedTeamStanding(standing);
-    } else {
-      console.warn("[PotsTab] teamId를 찾을 수 없음", {
-        countryId,
-        standingsCount: standings.length,
-      });
-      setSelectedTeamId(null);
-      setSelectedTeamStanding(null);
+        const teamsList = teamsData.teams || [];
+        setTeams(teamsList);
+        setTeamsLoaded(true);
+
+        // API teams 데이터를 기반으로 countries 배열 동적 생성
+        const dynamicCountries = createCountriesFromTeams(teamsList);
+        setCountriesList(dynamicCountries);
+
+        console.log("[PotsTab] Pots Teams 데이터 로드 완료", {
+          totalTeams: teamsList.length,
+          teamsWithValidId: teamsList.filter((t) => t.id !== null && t.id !== 0).length,
+          countriesCreated: dynamicCountries.length,
+        });
+      } catch (err) {
+        console.error("[PotsTab] Pots Teams API 호출 실패", err);
+        setTeamsLoaded(false);
+        setTeamsError(err instanceof Error ? err.message : "팀 정보를 불러올 수 없습니다.");
+      }
     }
-  }, [standings]);
+    loadTeams();
+  }, []);
+
+  /**
+   * team.name으로 team 찾기 (team.id 반환)
+   * ⚠️ 중요: team.name으로 매칭한 후 team.id로 변환
+   */
+  const getTeamIdFromTeamName = useCallback(
+    (teamName: string): number | null => {
+      if (!teamName) {
+        return null;
+      }
+
+      // team.name으로 매칭 (대소문자 무시)
+      const team = teams.find((t) => {
+        if (!t?.name || !t?.id) return false;
+        return t.name.toLowerCase() === teamName.toLowerCase();
+      });
+
+      if (!team || !team.id || team.id === 0) {
+        console.warn("[PotsTab] team.name으로 team.id 찾기 실패", {
+          teamName,
+          teamsCount: teams.length,
+        });
+        return null;
+      }
+
+      return team.id;
+    },
+    [teams]
+  );
+
+  /**
+   * teamId로 FIFA 랭킹 조회 (로컬 데이터 사용)
+   */
+  const getFifaRankingByTeamId = useCallback(
+    (teamId: number | null): { rank: number; points: number } | null => {
+      if (!teamId) return null;
+
+      // team.id로 team 찾기
+      const team = getTeamById(teams, teamId);
+      if (!team || !team.name) return null;
+
+      // team.name으로 FIFA 랭킹 조회
+      return getFifaRankingByTeamName(team.name);
+    },
+    [teams]
+  );
+
+  // 국가 클릭 핸들러
+  const handleTeamClick = useCallback(async (teamId: number, team: FrontTeam) => {
+    setSelectedTeamId(teamId);
+    setPlayersLoading(true);
+    setPlayersError(null);
+    setSelectedPlayer(null);
+
+    try {
+      const data = await fetchPlayersByTeamId(teamId, {
+        id: team.id!,
+        name: team.name,
+        crest: team.crest,
+      });
+      setPlayersData(data);
+    } catch (err) {
+      console.error("[PotsTab] 선수 데이터 로드 실패", err);
+      setPlayersError(err instanceof Error ? err.message : "선수 데이터를 불러올 수 없습니다.");
+    } finally {
+      setPlayersLoading(false);
+    }
+  }, []);
+
+  // 선수 데이터를 Player 타입으로 변환
+  const playersList: Player[] = useMemo(() => {
+    if (!playersData || !playersData.players) return [];
+    return playersData.players
+      .filter((p) => p.age !== undefined && p.age !== null && p.club !== undefined && p.club !== null)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        nameEn: p.nameEn,
+        position: p.position,
+        age: p.age!,
+        club: p.club!,
+      }));
+  }, [playersData]);
 
   /**
    * 필터링된 포트 목록 (검색어 및 포트 필터 적용)
    */
   const filteredPots = useMemo(() => {
+    // selectedPotFilter가 null이면 첫 번째 포트를 기본값으로 사용
+    const activePotFilter = selectedPotFilter ?? pots[0]?.id ?? null;
+
     return pots
-      .filter((pot) => selectedPotFilter === null || pot.id === selectedPotFilter)
+      .filter((pot) => activePotFilter === null || pot.id === activePotFilter)
       .map((pot) => {
-        const filteredTeams = pot.teams.filter((teamId) =>
-          matchesSearch(teamId, searchQuery)
-        );
+        const filteredTeams = pot.teams.filter((teamNameOrPlayoff) => {
+          // 플레이오프는 검색에서 제외
+          if (typeof teamNameOrPlayoff === "string" && teamNameOrPlayoff.startsWith("playoff_")) {
+            return true; // 플레이오프는 항상 표시
+          }
+
+          if (!searchQuery) return true;
+
+          // team.name으로 team.id 찾기
+          const teamId = getTeamIdFromTeamName(teamNameOrPlayoff);
+          if (!teamId) return false;
+
+          return matchesSearch(teamId, searchQuery);
+        });
         return { ...pot, teams: filteredTeams };
       })
       .filter((pot) => pot.teams.length > 0);
-  }, [searchQuery, selectedPotFilter]);
+  }, [searchQuery, selectedPotFilter, getTeamIdFromTeamName, matchesSearch]);
 
   return (
     <div>
-      {/* 국가 상세 정보 모달 */}
-      <CountryModal countryId={selectedCountry} onClose={() => setSelectedCountry(null)} />
-
       <div id="pots-content" className="bg-white rounded-lg shadow-lg p-4 md:p-6">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">
-          포트별 팀 정보
-        </h2>
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">포트별 팀 정보</h2>
 
         {/* 검색 및 필터 섹션 */}
         <div className="mb-6 space-y-4">
@@ -268,7 +312,7 @@ export default function PotsTab() {
           <div className="relative">
             <input
               type="text"
-              placeholder="팀 이름 또는 선수 이름으로 검색..."
+              placeholder="팀 이름으로 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-800"
@@ -278,26 +322,13 @@ export default function PotsTab() {
 
           {/* 포트 필터 버튼 */}
           <div className="flex flex-wrap gap-2 justify-center">
-            <button
-              onClick={() => setSelectedPotFilter(null)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                selectedPotFilter === null
-                  ? "bg-blue-600 text-white shadow-lg scale-105"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              전체
-            </button>
             {pots.map((pot) => (
               <button
                 key={pot.id}
                 onClick={() => setSelectedPotFilter(pot.id)}
                 className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  selectedPotFilter === pot.id
-                    ? "bg-blue-600 text-white shadow-lg scale-105"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
+                  selectedPotFilter === pot.id ? "bg-blue-600 text-white shadow-lg scale-105" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}>
                 {pot.name}
               </button>
             ))}
@@ -306,168 +337,143 @@ export default function PotsTab() {
 
         {/* 포트별 팀 목록 */}
         {filteredPots.length > 0 ? (
-          // 포트별 표시
           <div className="space-y-6">
             {filteredPots.map((pot) => (
-              <div
-                key={pot.id}
-                className="bg-gray-50 rounded-lg p-4 md:p-6 border-2 border-gray-200"
-              >
-                <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-800">
-                  {pot.name}
-                </h3>
+              <div key={pot.id} className="bg-gray-50 rounded-lg p-4 md:p-6 border-2 border-gray-200">
+                <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-800">{pot.name}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {pot.teams.map((teamId, index) => {
-                    const country = getCountryById(teamId);
-
-                    if (!country) {
-                      // 플레이오프 승자 - 유럽 플레이오프는 참가국들을 표시
-                      const participants = getPlayoffParticipants(teamId);
-
-                      // 유럽 플레이오프인 경우 참가국들을 표시
-                      if ((teamId.startsWith("playoff_europe") || teamId.startsWith("playoff_intercontinental")) && participants.length > 0) {
-                        return (
-                          <div
-                            key={`${pot.id}-${teamId}-${index}`}
-                            className="col-span-full"
-                          >
-                            <div className="mb-2 text-sm font-semibold text-gray-700">
-                              {getPlayoffName(teamId)} 참가국:
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                              {participants.map((participantId) => {
-                                const participantCountry = getCountryById(participantId);
-                                if (!participantCountry) return null;
-
-                                return (
-                                  <button
-                                    key={participantId}
-                                    onClick={() => setSelectedCountry(participantId)}
-                                    className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col items-center justify-center gap-2"
-                                  >
-                                    <Flag country={participantCountry} size="lg" />
-                                    <span className="text-sm font-semibold text-gray-800 text-center">
-                                      {participantCountry.name}
-                                    </span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      }
-
-                      // 다른 플레이오프는 기존대로 표시
+                  {pot.teams.map((teamNameOrPlayoff, index) => {
+                    // 플레이오프 승자 체크
+                    if (typeof teamNameOrPlayoff === "string" && teamNameOrPlayoff.startsWith("playoff_")) {
                       return (
-                        <div
-                          key={`${pot.id}-${index}`}
-                          className="px-4 py-3 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 text-center"
-                        >
-                          <div className="text-sm font-medium text-gray-700">
-                            {getPlayoffName(teamId)}
-                          </div>
+                        <div key={`${pot.id}-${teamNameOrPlayoff}-${index}`} className="px-4 py-3 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 text-center">
+                          <div className="text-sm font-medium text-gray-700">{teamNameOrPlayoff.replace("playoff_", "").replace(/_/g, " ").toUpperCase()} 플레이오프 승자</div>
                         </div>
                       );
                     }
 
-                  // 일반 국가
-                  return (
-                    <button
-                      key={country.id}
-                      onClick={() => {
-                        console.log("[PotsTab] 국가 클릭", { countryId: country.id, countryName: country.name });
-                        handleCountryClick(country.id);
-                      }}
-                      className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col items-center justify-center gap-2 relative group"
-                    >
-                      <Flag country={country} size="lg" />
-                      <span className="text-sm font-semibold text-gray-800 text-center">
-                        {country.name}
-                      </span>
-                      {searchQuery && matchesSearch(country.id, searchQuery) && (
-                        <span className="absolute inset-0 border-2 border-yellow-400 rounded-lg animate-pulse" />
-                      )}
-                    </button>
-                  );
+                    // team.name으로 team.id 찾기
+                    const teamId = getTeamIdFromTeamName(teamNameOrPlayoff);
+                    if (!teamId) {
+                      console.warn("[PotsTab] teamId를 찾을 수 없음", { teamNameOrPlayoff });
+                      return null;
+                    }
+
+                    // team.id로 team 찾기 (getTeamById 유틸 사용)
+                    const team = getTeamById(teams, teamId);
+                    if (!team || !team.id) {
+                      console.warn("[PotsTab] team을 찾을 수 없음", { teamNameOrPlayoff, teamId });
+                      return null;
+                    }
+
+                    // FIFA 랭킹 조회 (data 파일 사용)
+                    const fifaRanking = getFifaRankingByTeamId(team.id);
+
+                    // country 정보는 UI 표시용으로만 조회 (동적으로 생성된 countriesList 사용)
+                    const country = getCountryByTeamId(team.id, countriesList);
+                    if (!country) {
+                      console.warn("[PotsTab] country를 찾을 수 없음", { teamId: team.id, teamName: team.name });
+                      return null;
+                    }
+
+                    // 일반 국가: 국기 + 국가명만 표시 (클릭 가능)
+                    return (
+                      <button
+                        key={`${pot.id}-${team.id}-${index}`}
+                        onClick={() => handleTeamClick(team.id!, team)}
+                        className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 flex flex-col items-center justify-center gap-2 relative group hover:bg-blue-100 hover:border-blue-400 transition-colors cursor-pointer">
+                        <Flag country={country} size="lg" />
+                        <span className="text-sm font-semibold text-gray-800 text-center">{country.nameKo}</span>
+                        {fifaRanking && (
+                          <span className="text-xs text-gray-500 mt-1">
+                            FIFA {fifaRanking.rank}위 ({fifaRanking.points}점)
+                          </span>
+                        )}
+                        {searchQuery && matchesSearch(team.id, searchQuery) && <span className="absolute inset-0 border-2 border-yellow-400 rounded-lg animate-pulse" />}
+                      </button>
+                    );
                   })}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-600">
-            검색 결과가 없습니다.
-          </div>
+          <div className="text-center py-8 text-gray-600">검색 결과가 없습니다.</div>
         )}
 
-        {/* 선수 명단 표시 섹션 */}
-        {selectedTeamId && selectedTeamStanding && (
-          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src={selectedTeamStanding.crest}
-                  alt={selectedTeamStanding.team.name}
-                  className="w-12 h-12 object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-                <div>
-                  <h3 className="text-xl font-bold text-gray-800">
-                    {selectedTeamStanding.team.name} 선수 명단
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {selectedTeamStanding.group}조 · {selectedTeamStanding.position}위
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  console.log("[PotsTab] 선수 명단 닫기");
-                  setSelectedTeamId(null);
-                  setSelectedTeamStanding(null);
-                  setPlayers(null);
-                  setPlayersList([]);
-                }}
-                className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-              >
-                닫기
-              </button>
-            </div>
-
-            {loadingPlayers ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                <p className="text-gray-600">선수 정보를 불러오는 중...</p>
-              </div>
-            ) : playersList && playersList.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {playersList.map((player) => (
-                  <div
-                    key={player.id}
-                    className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <h4 className="font-semibold text-gray-800">{player.name}</h4>
-                    {player.nameEn && (
-                      <p className="text-sm text-gray-600">{player.nameEn}</p>
-                    )}
-                    <p className="text-sm text-gray-500 mt-1">
-                      {player.position}
-                      {player.age && ` · ${player.age}세`}
-                      {player.club && ` · ${player.club}`}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-600">
-                {players ? "선수 정보가 없습니다." : "선수 정보를 불러올 수 없습니다."}
-              </div>
-            )}
+        {/* API 로드 실패 시 fallback UI */}
+        {teamsError && (
+          <div className="mt-6 bg-red-50 border-2 border-red-200 rounded-lg p-4">
+            <p className="text-red-800 font-semibold mb-2">⚠️ 팀 정보를 불러올 수 없습니다</p>
+            <p className="text-sm text-red-600">{teamsError}</p>
           </div>
         )}
       </div>
+
+      {/* 선수 명단 모달 */}
+      {selectedTeamId && (
+        <div
+          className="fixed inset-0 z-[30] flex items-center justify-center p-4"
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            pointerEvents: "auto",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => {
+            setSelectedTeamId(null);
+            setPlayersData(null);
+            setSelectedPlayer(null);
+          }}>
+          <div
+            className="modal-content bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            style={{ pointerEvents: "auto", position: "relative", zIndex: 31 }}
+            onClick={(e) => e.stopPropagation()}>
+            {/* 모달 헤더 */}
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                {playersData &&
+                  (() => {
+                    const country = getCountryByTeamId(playersData.team.id, countriesList);
+                    return country ? <Flag country={country} size="md" /> : null;
+                  })()}
+                <h3 className="text-xl md:text-2xl font-bold">{playersData?.team.name || "선수 명단"}</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedTeamId(null);
+                  setPlayersData(null);
+                  setSelectedPlayer(null);
+                }}
+                className="text-white hover:text-gray-200 text-3xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-white hover:bg-opacity-20 transition-colors">
+                ×
+              </button>
+            </div>
+
+            {/* 모달 내용 */}
+            <div className="p-6">
+              {playersLoading ? (
+                <div className="text-center py-16">
+                  <p className="text-gray-600">선수 명단을 불러오는 중...</p>
+                </div>
+              ) : playersError ? (
+                <div className="text-center py-16">
+                  <p className="text-red-600 font-semibold mb-2">⚠️ 오류 발생</p>
+                  <p className="text-sm text-gray-600">{playersError}</p>
+                </div>
+              ) : playersList.length > 0 ? (
+                <PlayerList players={playersList} onPlayerClick={(player) => setSelectedPlayer(player)} />
+              ) : (
+                <div className="text-center py-16">
+                  <p className="text-gray-600">선수 명단이 없습니다.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 선수 상세 정보 모달 */}
+      <PlayerModal player={selectedPlayer} countryName={playersData?.team.name} onClose={() => setSelectedPlayer(null)} />
     </div>
   );
 }
