@@ -159,6 +159,7 @@ export const worldCupGroups: WorldCupGroup[] = [
         players: ['Mohamed Salah', 'Mohamed Elneny', 'Ahmed Hegazi', 'Mohamed El-Shenawy', 'Trézéguet'],
         countryId: 'egypt',
       },
+    ],
   },
   {
     group: 'F',
