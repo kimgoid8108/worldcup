@@ -152,15 +152,9 @@ export default function PotsTab() {
 
   // selectedTeamId 변경 시 players API 호출
   useEffect(() => {
-    console.log("[PotsTab] selectedTeamId 변경 감지", { selectedTeamId });
-
     async function loadPlayers() {
-      // teamId가 없거나 플레이오프 국가인 경우 fetch 실행 안 함
-      if (!selectedTeamId || isPlayoffTeam(selectedTeamId)) {
-        console.log("[PotsTab] teamId가 유효하지 않아 players API 호출 차단", {
-          selectedTeamId,
-          isPlayoff: isPlayoffTeam(selectedTeamId),
-        });
+      // selectedTeamId가 null/undefined/0이거나 플레이오프 국가인 경우 fetch 실행 안 함
+      if (!selectedTeamId || selectedTeamId === 0 || isPlayoffTeam(selectedTeamId)) {
         setPlayers(null);
         setPlayersList([]);
         setLoadingPlayers(false);
@@ -168,18 +162,19 @@ export default function PotsTab() {
       }
 
       try {
-        console.log("[PotsTab] players API 호출 시작", {
+        console.log("FETCH PLAYERS", {
           teamId: selectedTeamId,
-          timestamp: new Date().toISOString(),
         });
         setLoadingPlayers(true);
         setPlayers(null);
         setPlayersList([]);
 
         const playersData = await fetchPlayersByTeamId(selectedTeamId);
-        console.log("[PotsTab] players API 응답 수신", {
+
+        console.log("PLAYERS DATA", {
           team: playersData.team,
           playersCount: playersData.players?.length || 0,
+          data: playersData,
         });
 
         // API response 구조 확인 및 처리
@@ -198,9 +193,6 @@ export default function PotsTab() {
           }
         }
 
-        console.log("[PotsTab] players state 설정", {
-          playersCount: actualPlayers.length,
-        });
         setPlayers(playersData);
         setPlayersList(actualPlayers);
       } catch (err) {
@@ -212,7 +204,6 @@ export default function PotsTab() {
         setPlayersList([]);
       } finally {
         setLoadingPlayers(false);
-        console.log("[PotsTab] players 로딩 완료", { teamId: selectedTeamId });
       }
     }
 
@@ -221,8 +212,6 @@ export default function PotsTab() {
 
   // 국가 클릭 핸들러: countryId (string) → teamId (number) 변환
   const handleCountryClick = useCallback((countryId: string) => {
-    console.log("[PotsTab] 국가 클릭", { countryId });
-
     // standings에서 해당 국가의 team.id 찾기
     const standing = standings.find((s) => {
       const country = getCountryById(countryId);
@@ -231,7 +220,7 @@ export default function PotsTab() {
     });
 
     if (standing && standing.team.id !== null) {
-      console.log("[PotsTab] teamId 설정", {
+      console.log("SELECT TEAM ID", {
         countryId,
         teamId: standing.team.id,
         teamName: standing.team.name,
