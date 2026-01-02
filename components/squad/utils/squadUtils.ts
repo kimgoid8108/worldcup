@@ -79,17 +79,17 @@ export const convertToPlayerWithImage = (
   const defaultImageUrl = "https://i.ifh.cc/qbhPHD.png";
 
   // 이미 PlayerWithImage 타입인 경우 (imageUrl이 필수 필드)
-  if ("imageUrl" in player && typeof player.imageUrl === "string") {
-    return player;
+  // 타입 가드: PlayerWithImage는 imageUrl이 항상 string
+  if ("imageUrl" in player && typeof player.imageUrl === "string" && player.imageUrl) {
+    return player as PlayerWithImage;
   }
 
   // Player 타입인 경우 변환 (imageUrl이 optional)
-  const playerWithOptionalImage = player as Player;
   return {
     id: player.id, // 이미 number 타입이므로 변환 불필요
     name: player.name,
     position: player.position,
-    imageUrl: playerWithOptionalImage.imageUrl || defaultImageUrl,
+    imageUrl: (player as Player).imageUrl || defaultImageUrl,
   };
 };
 
