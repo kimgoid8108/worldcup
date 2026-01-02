@@ -5,9 +5,10 @@
  * - 각 포트별 참가 팀 표시 (국기 + 국가명)
  * - 검색 기능: 팀 이름으로 검색 가능
  * - 필터 기능: 특정 포트만 보기
+ * - 국가 클릭 시 선수 명단 표시 (API 사용)
  *
  * ⚠️ 중요:
- * - 포트 화면에서는 선수 API를 절대 호출하지 않음
+ * - 포트 화면에서만 API 사용 (fetchPotsTeams, fetchPlayersByTeamId)
  * - 모든 매칭은 team.id(number) 하나로 통일
  * - team.name으로 매칭한 후 team.id로 변환하여 사용
  */
@@ -19,10 +20,13 @@ import { pots } from "@/data/pots";
 import { getCountryByTeamId, createCountriesFromTeams, type Country } from "@/data/countries";
 import Flag from "@/components/ui/Flag";
 import { normalizeText } from "@/src/utils/normalizeText";
-import { fetchPotsTeams } from "@/src/utils/api";
+import { fetchPotsTeams, fetchPlayersByTeamId } from "@/src/utils/api";
 import { getTeamById } from "@/src/utils/team";
 import { getFifaRankingByTeamName } from "@/data/fifaRankings";
-import type { FrontTeam } from "@/src/types/api";
+import type { FrontTeam, FrontPlayersResponse } from "@/src/types/api";
+import PlayerList from "@/components/cards/PlayerList";
+import { type Player } from "@/types/player";
+import PlayerModal from "@/components/modals/PlayerModal";
 
 export default function PotsTab() {
   // 검색어
@@ -37,6 +41,13 @@ export default function PotsTab() {
 
   // 동적으로 생성된 countries 배열 (API teams 데이터 기반)
   const [countriesList, setCountriesList] = useState<Country[]>([]);
+
+  // 선수 명단 관련 상태
+  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
+  const [playersData, setPlayersData] = useState<FrontPlayersResponse | null>(null);
+  const [playersLoading, setPlayersLoading] = useState(false);
+  const [playersError, setPlayersError] = useState<string | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   /**
    * 팀이 검색어와 일치하는지 확인 (팀 이름으로 검색)
@@ -62,6 +73,87 @@ export default function PotsTab() {
     },
     [countriesList]
   );
+
+  /**
+   * 모달 열림/닫힘 시 배경 스크롤 제어
+   * - 모달이 열리면 배경 스크롤만 잠금 (배경은 보이도록 유지)
+   * - 모달이 닫히면 스크롤 복원
+   * - wheel/touchmove 이벤트로 배경 스크롤만 차단
+   * - 모달 내부에서 스크롤이 끝에 도달해도 배경 스크롤 방지
+   */
+  useEffect(() => {
+    if (selectedTeamId) {
+      /**
+       * 배경 스크롤 완전 차단 함수
+       * 모달 내부(.modal-content)가 아닌 영역의 스크롤을 완전히 차단
+       * 모달 내부에서 스크롤이 끝에 도달해도 배경 스크롤 방지
+       */
+      const preventScroll = (e: WheelEvent | TouchEvent) => {
+        // e.target이 Element인지 확인
+        if (!(e.target instanceof Element)) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+
+        const target = e.target as HTMLElement;
+        const modalContent = target.closest(".modal-content") as HTMLElement;
+
+        // 모달 내부가 아닌 경우 무조건 스크롤 차단
+        if (!modalContent) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+
+        // 모달 내부인 경우, 스크롤이 끝에 도달했는지 확인
+        if (modalContent) {
+          const { scrollTop, scrollHeight, clientHeight } = modalContent;
+          const isScrollAtTop = scrollTop === 0;
+          const isScrollAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+          // wheel 이벤트인 경우
+          if (e instanceof WheelEvent) {
+            const deltaY = e.deltaY;
+
+            // 위로 스크롤하려고 할 때 이미 맨 위에 있으면 배경 스크롤 방지
+            if (deltaY < 0 && isScrollAtTop) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+
+            // 아래로 스크롤하려고 할 때 이미 맨 아래에 있으면 배경 스크롤 방지
+            if (deltaY > 0 && isScrollAtBottom) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+          }
+
+          // touchmove 이벤트인 경우 (터치 스크롤이 끝에 도달했을 때 배경 스크롤 방지)
+          if (e instanceof TouchEvent && (isScrollAtTop || isScrollAtBottom)) {
+            // 모달 내부 스크롤이 끝에 도달했을 때는 배경 스크롤 방지
+            // 다만 실제 터치 스크롤은 모달 내부에서만 동작하도록 함
+          }
+        }
+      };
+
+      // 전역 스크롤 이벤트 리스너 추가 (여러 이벤트 타입)
+      window.addEventListener("wheel", preventScroll, { passive: false, capture: true });
+      window.addEventListener("touchmove", preventScroll, { passive: false, capture: true });
+      document.addEventListener("wheel", preventScroll, { passive: false, capture: true });
+      document.addEventListener("touchmove", preventScroll, { passive: false, capture: true });
+
+      // cleanup: 모달 닫힐 때 이벤트 리스너 제거
+      return () => {
+        window.removeEventListener("wheel", preventScroll, true);
+        window.removeEventListener("touchmove", preventScroll, true);
+        document.removeEventListener("wheel", preventScroll, true);
+        document.removeEventListener("touchmove", preventScroll, true);
+      };
+    }
+  }, [selectedTeamId]);
 
   // 포트 팀 API 데이터 로드
   useEffect(() => {
@@ -141,6 +233,43 @@ export default function PotsTab() {
     },
     [teams]
   );
+
+  // 국가 클릭 핸들러
+  const handleTeamClick = useCallback(async (teamId: number, team: FrontTeam) => {
+    setSelectedTeamId(teamId);
+    setPlayersLoading(true);
+    setPlayersError(null);
+    setSelectedPlayer(null);
+
+    try {
+      const data = await fetchPlayersByTeamId(teamId, {
+        id: team.id!,
+        name: team.name,
+        crest: team.crest,
+      });
+      setPlayersData(data);
+    } catch (err) {
+      console.error("[PotsTab] 선수 데이터 로드 실패", err);
+      setPlayersError(err instanceof Error ? err.message : "선수 데이터를 불러올 수 없습니다.");
+    } finally {
+      setPlayersLoading(false);
+    }
+  }, []);
+
+  // 선수 데이터를 Player 타입으로 변환
+  const playersList: Player[] = useMemo(() => {
+    if (!playersData || !playersData.players) return [];
+    return playersData.players
+      .filter((p) => p.age !== undefined && p.age !== null && p.club !== undefined && p.club !== null)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        nameEn: p.nameEn,
+        position: p.position,
+        age: p.age!,
+        club: p.club!,
+      }));
+  }, [playersData]);
 
   /**
    * 필터링된 포트 목록 (검색어 및 포트 필터 적용)
@@ -246,9 +375,12 @@ export default function PotsTab() {
                       return null;
                     }
 
-                    // 일반 국가: 국기 + 국가명만 표시
+                    // 일반 국가: 국기 + 국가명만 표시 (클릭 가능)
                     return (
-                      <div key={`${pot.id}-${team.id}-${index}`} className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 flex flex-col items-center justify-center gap-2 relative group">
+                      <button
+                        key={`${pot.id}-${team.id}-${index}`}
+                        onClick={() => handleTeamClick(team.id!, team)}
+                        className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 flex flex-col items-center justify-center gap-2 relative group hover:bg-blue-100 hover:border-blue-400 transition-colors cursor-pointer">
                         <Flag country={country} size="lg" />
                         <span className="text-sm font-semibold text-gray-800 text-center">{country.nameKo}</span>
                         {fifaRanking && (
@@ -257,7 +389,7 @@ export default function PotsTab() {
                           </span>
                         )}
                         {searchQuery && matchesSearch(team.id, searchQuery) && <span className="absolute inset-0 border-2 border-yellow-400 rounded-lg animate-pulse" />}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -276,6 +408,71 @@ export default function PotsTab() {
           </div>
         )}
       </div>
+
+      {/* 선수 명단 모달 */}
+      {selectedTeamId && (
+        <div
+          className="fixed inset-0 z-[30] flex items-center justify-center p-4"
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            pointerEvents: "auto",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => {
+            setSelectedTeamId(null);
+            setPlayersData(null);
+            setSelectedPlayer(null);
+          }}>
+          <div
+            className="modal-content bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            style={{ pointerEvents: "auto", position: "relative", zIndex: 31 }}
+            onClick={(e) => e.stopPropagation()}>
+            {/* 모달 헤더 */}
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                {playersData &&
+                  (() => {
+                    const country = getCountryByTeamId(playersData.team.id, countriesList);
+                    return country ? <Flag country={country} size="md" /> : null;
+                  })()}
+                <h3 className="text-xl md:text-2xl font-bold">{playersData?.team.name || "선수 명단"}</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedTeamId(null);
+                  setPlayersData(null);
+                  setSelectedPlayer(null);
+                }}
+                className="text-white hover:text-gray-200 text-3xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-white hover:bg-opacity-20 transition-colors">
+                ×
+              </button>
+            </div>
+
+            {/* 모달 내용 */}
+            <div className="p-6">
+              {playersLoading ? (
+                <div className="text-center py-16">
+                  <p className="text-gray-600">선수 명단을 불러오는 중...</p>
+                </div>
+              ) : playersError ? (
+                <div className="text-center py-16">
+                  <p className="text-red-600 font-semibold mb-2">⚠️ 오류 발생</p>
+                  <p className="text-sm text-gray-600">{playersError}</p>
+                </div>
+              ) : playersList.length > 0 ? (
+                <PlayerList players={playersList} onPlayerClick={(player) => setSelectedPlayer(player)} />
+              ) : (
+                <div className="text-center py-16">
+                  <p className="text-gray-600">선수 명단이 없습니다.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 선수 상세 정보 모달 */}
+      <PlayerModal player={selectedPlayer} countryName={playersData?.team.name} onClose={() => setSelectedPlayer(null)} />
     </div>
   );
 }
