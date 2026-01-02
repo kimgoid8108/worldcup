@@ -10,7 +10,7 @@
 "use client";
 
 import { useEffect, useMemo, useCallback } from "react";
-import { Player } from "@/data/players";
+import { type Player } from "@/types/player";
 
 interface PlayerModalProps {
   player: Player | null;
@@ -72,7 +72,7 @@ export default function PlayerModal({ player, countryName, onClose }: PlayerModa
 
     // CountryModal이 열려있는지 확인 (z-40 클래스를 가진 요소 확인)
     const isCountryModalOpen = document.querySelector('.fixed.inset-0.z-40') !== null;
-    
+
     // CountryModal이 열려있지 않은 경우에만 스크롤 제어
     if (!isCountryModalOpen) {
       const scrollY = window.scrollY;
@@ -90,7 +90,7 @@ export default function PlayerModal({ player, countryName, onClose }: PlayerModa
     return () => {
       // PlayerModal이 닫힐 때, CountryModal이 여전히 열려있는지 확인
       const isCountryModalStillOpen = document.querySelector('.fixed.inset-0.z-40') !== null;
-      
+
       // CountryModal이 열려있지 않은 경우에만 스크롤 복원
       if (!isCountryModalStillOpen) {
         restoreScroll();
@@ -114,7 +114,7 @@ export default function PlayerModal({ player, countryName, onClose }: PlayerModa
   return (
     <div
       className="fixed inset-0 z-[45] flex items-center justify-center p-4"
-      style={{ 
+      style={{
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         pointerEvents: 'auto',
       }}

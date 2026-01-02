@@ -12,7 +12,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Country, getCountryById } from "@/data/countries";
-import { getPlayersByCountry, Player } from "@/data/players";
+import { getPlayersByCountry } from "@/data/players";
+import { type Player } from "@/types/player";
 import { getFifaRanking, getFifaRank } from "@/data/fifaRankings";
 import PlayerModal from "./PlayerModal";
 import Flag from "@/components/ui/Flag";

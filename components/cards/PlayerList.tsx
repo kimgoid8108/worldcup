@@ -6,7 +6,7 @@
 
 "use client";
 
-import { Player } from "@/data/players";
+import { type Player } from "@/types/player";
 import PlayerCard from "@/components/cards/PlayerCard";
 
 interface PlayerListProps {
@@ -41,4 +41,3 @@ export default function PlayerList({
     </div>
   );
 }
-

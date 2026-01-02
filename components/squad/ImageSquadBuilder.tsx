@@ -10,16 +10,16 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { PlayerWithImage } from "./PlayerImageCard";
-import { Player } from "@/data/players";
-import { Formation, SquadPlayer } from "./utils/squadUtils";
+import { type Player, type PlayerWithImage } from "@/types/player";
+import { type Formation, type SquadPlayer } from "./utils/squadUtils";
 import { useSquadInitialization } from "./hooks/useSquadInitialization";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import PitchLines from "./PitchLines";
 import DraggablePlayerCard from "./DraggablePlayerCard";
 
 // Export types for external use
-export type { PlayerWithImage, Formation };
+export type { PlayerWithImage } from "@/types/player";
+export type { Formation } from "./utils/squadUtils";
 
 interface ImageSquadBuilderProps {
   players: (PlayerWithImage | Player)[];
@@ -59,7 +59,7 @@ export default function ImageSquadBuilder({ players, formation = "4-3-3", onPlay
   // 모바일에서 세로 배치를 위한 위치 변환 함수
   const transformPositionForMobile = useCallback((pos: { x: number; y: number }, isTeam2: boolean): { x: number; y: number } => {
     if (!isMobile || !isTwoTeamMode) return pos;
-    
+
     // 가로 배치(왼쪽/오른쪽) → 세로 배치(위/아래) 변환
     if (isTeam2) {
       // 어웨이 팀: 아래쪽에 배치 (y: 60-90%)
@@ -136,8 +136,8 @@ export default function ImageSquadBuilder({ players, formation = "4-3-3", onPlay
   return (
     <div className="w-full">
       {/* 축구장 배경 */}
-      <div 
-        ref={pitchRef} 
+      <div
+        ref={pitchRef}
         className={`relative w-full bg-gradient-to-b from-green-600 to-green-700 rounded-lg overflow-hidden select-none ${
           isTwoTeamMode && isMobile ? 'aspect-[3/4]' : isTwoTeamMode ? 'md:aspect-video' : 'aspect-[3/4]'
         }`}

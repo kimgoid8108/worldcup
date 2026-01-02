@@ -7,13 +7,9 @@
 "use client";
 
 import { useState } from "react";
+import { type PlayerWithImage } from "@/types/player";
 
-export interface PlayerWithImage {
-  id: number;
-  name: string;
-  position: string;
-  imageUrl: string;
-}
+// PlayerWithImage 타입은 types/player.ts에서 import
 
 interface PlayerImageCardProps {
   player: PlayerWithImage | null;

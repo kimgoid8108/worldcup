@@ -6,7 +6,7 @@
 
 "use client";
 
-import { Player } from "@/data/players";
+import { type Player } from "@/types/player";
 
 interface PlayerCardProps {
   player: Player;
@@ -76,4 +76,3 @@ export default function PlayerCard({
     </button>
   );
 }
-

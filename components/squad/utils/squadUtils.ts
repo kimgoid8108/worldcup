@@ -2,16 +2,19 @@
  * 스쿼드 빌더 유틸리티 함수들
  */
 
-import { Player } from "@/data/players";
-import { PlayerWithImage } from "../PlayerImageCard";
+import { type Player, type PlayerWithImage } from "@/types/player";
 
 export interface Position {
   x: number; // 0-100 (퍼센트)
   y: number; // 0-100 (퍼센트)
 }
 
+/**
+ * 스쿼드 선수 인터페이스
+ * player는 Player 또는 PlayerWithImage 타입 (둘 다 PlayerBase를 확장하므로 구조적으로 호환)
+ */
 export interface SquadPlayer {
-  player: (PlayerWithImage | Player) | null;
+  player: Player | PlayerWithImage | null;
   position: Position;
   isCustom: boolean;
 }
@@ -64,24 +67,29 @@ export const getPlayersByPosition = (
   return players.filter((p) => p.position === position);
 };
 
-// Player를 PlayerWithImage로 변환 (imageUrl이 없으면 기본 이미지 사용)
+/**
+ * Player를 PlayerWithImage로 변환
+ * imageUrl이 없으면 기본 이미지 사용
+ * id는 이미 number이므로 타입 캐스팅 불필요
+ */
 export const convertToPlayerWithImage = (
   player: PlayerWithImage | Player | null
 ): PlayerWithImage | null => {
   if (!player) return null;
   const defaultImageUrl = "https://i.ifh.cc/qbhPHD.png";
 
-  // 이미 PlayerWithImage 타입인 경우
-  if ("imageUrl" in player && player.imageUrl) {
-    return player as PlayerWithImage;
+  // 이미 PlayerWithImage 타입인 경우 (imageUrl이 필수 필드)
+  if ("imageUrl" in player && typeof player.imageUrl === "string") {
+    return player;
   }
 
-  // Player 타입인 경우 변환
+  // Player 타입인 경우 변환 (imageUrl이 optional)
+  const playerWithOptionalImage = player as Player;
   return {
-    id: typeof player.id === "string" ? parseInt(player.id) || 0 : player.id,
+    id: player.id, // 이미 number 타입이므로 변환 불필요
     name: player.name,
     position: player.position,
-    imageUrl: (player as Player).imageUrl || defaultImageUrl,
+    imageUrl: playerWithOptionalImage.imageUrl || defaultImageUrl,
   };
 };
 

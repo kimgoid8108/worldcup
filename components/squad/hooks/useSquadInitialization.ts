@@ -4,9 +4,9 @@
 
 import { useCallback, useMemo } from "react";
 import {
-  SquadPlayer,
-  Position,
-  Formation,
+  type SquadPlayer,
+  type Position,
+  type Formation,
   FORMATION_POSITIONS,
   FORMATION_INDICES,
   getPlayersByPosition,
@@ -15,8 +15,7 @@ import {
   HOME_TEAM_CUSTOM_POSITIONS_442,
   AWAY_TEAM_CUSTOM_POSITIONS_442,
 } from "../utils/squadUtils";
-import { PlayerWithImage } from "../PlayerImageCard";
-import { Player } from "@/data/players";
+import { type Player, type PlayerWithImage } from "@/types/player";
 
 interface UseSquadInitializationProps {
   players: (PlayerWithImage | Player)[];

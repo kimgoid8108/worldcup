@@ -11,7 +11,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Player } from "@/data/players";
+import { type Player } from "@/types/player";
 
 export type Formation = "4-3-3" | "4-4-2";
 

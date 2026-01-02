@@ -4,8 +4,9 @@
  */
 
 import { memo, useCallback } from "react";
-import PlayerImageCard, { PlayerWithImage } from "./PlayerImageCard";
-import { SquadPlayer, convertToPlayerWithImage } from "./utils/squadUtils";
+import PlayerImageCard from "./PlayerImageCard";
+import { type PlayerWithImage } from "@/types/player";
+import { type SquadPlayer, convertToPlayerWithImage } from "./utils/squadUtils";
 
 interface DraggablePlayerCardProps {
   squadPlayer: SquadPlayer;
@@ -33,7 +34,9 @@ const DraggablePlayerCard = memo(
       (e: React.MouseEvent) => {
         // 드래그가 발생하지 않았을 때만 클릭 이벤트 실행
         if (!isDragging && !hasDragged) {
-          onPlayerClick?.(squadPlayer.player, index);
+          // squadPlayer.player를 PlayerWithImage로 변환하여 전달
+          const playerWithImage = convertToPlayerWithImage(squadPlayer.player);
+          onPlayerClick?.(playerWithImage, index);
         }
       },
       [isDragging, hasDragged, squadPlayer.player, index, onPlayerClick]
