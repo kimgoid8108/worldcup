@@ -131,19 +131,20 @@ export default function FifaRankingsTab() {
 
   /**
    * 팀이 검색어와 일치하는지 확인 (useCallback으로 메모이제이션)
+   * 검색어는 국가 이름의 앞글자부터 시작해야 함 (startsWith 기반)
    */
   const matchesSearch = useCallback((teamId: string, query: string): boolean => {
     if (!query) return true;
 
     // 검색어에서 띄어쓰기 제거 및 소문자 변환
-    const normalizedQuery = query.replace(/\s+/g, "").toLowerCase();
+    const normalizedQuery = query.trim().replace(/\s+/g, "").toLowerCase();
 
     const country = getCountryById(teamId);
     if (!country) return false;
 
-    // 팀 이름으로 검색 (띄어쓰기 제거)
+    // 팀 이름으로 검색 (띄어쓰기 제거, 앞글자부터 시작해야 함)
     const normalizedCountryName = country.name.replace(/\s+/g, "").toLowerCase();
-    return normalizedCountryName.includes(normalizedQuery);
+    return normalizedCountryName.startsWith(normalizedQuery);
   }, []);
 
   /**

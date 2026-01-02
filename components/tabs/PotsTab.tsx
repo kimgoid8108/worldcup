@@ -88,12 +88,13 @@ export default function PotsTab() {
   /**
    * 팀이 검색어와 일치하는지 확인 (팀 이름 또는 선수 이름으로 검색)
    * 띄어쓰기를 제거하고 검색 (예: "손 흥민" → "손흥민"으로 검색)
+   * 국가 이름 검색은 앞글자부터 시작해야 함 (startsWith 기반)
    */
   const matchesSearch = (teamId: string, query: string): boolean => {
     if (!query) return true;
 
     // 검색어에서 띄어쓰기 제거 및 소문자 변환
-    const normalizedQuery = query.replace(/\s+/g, "").toLowerCase();
+    const normalizedQuery = query.trim().replace(/\s+/g, "").toLowerCase();
 
     const country = getCountryById(teamId);
     if (!country) {
@@ -102,9 +103,9 @@ export default function PotsTab() {
       return playoffName.includes(normalizedQuery);
     }
 
-    // 팀 이름으로 검색 (띄어쓰기 제거)
+    // 팀 이름으로 검색 (띄어쓰기 제거, 앞글자부터 시작해야 함)
     const normalizedCountryName = country.name.replace(/\s+/g, "").toLowerCase();
-    if (normalizedCountryName.includes(normalizedQuery)) {
+    if (normalizedCountryName.startsWith(normalizedQuery)) {
       return true;
     }
 

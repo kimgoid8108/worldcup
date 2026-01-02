@@ -30,14 +30,16 @@ export default function StadiumsTab() {
    * 경기장을 국가별로 그룹화 및 검색 필터링
    * useMemo로 최적화: stadiums 배열이 변경되지 않는 한 재계산하지 않음
    * 띄어쓰기를 제거하고 검색 (예: "So Fi" → "SoFi"로 검색)
+   * 국가 이름 검색은 앞글자부터 시작해야 함 (startsWith 기반)
    */
   const groupedStadiums = useMemo(() => {
     const filtered = searchQuery
       ? stadiums.filter((stadium) => {
           // 검색어에서 띄어쓰기 제거 및 소문자 변환
-          const normalizedQuery = searchQuery.replace(/\s+/g, "").toLowerCase();
+          const normalizedQuery = searchQuery.trim().replace(/\s+/g, "").toLowerCase();
 
-          // 경기장 이름, 도시, 국가에서 띄어쓰기 제거 후 검색
+          // 경기장 이름, 도시는 includes 사용 (기존 동작 유지)
+          // 국가 이름은 앞글자부터 시작해야 함
           const normalizedName = stadium.name.replace(/\s+/g, "").toLowerCase();
           const normalizedCity = stadium.city.replace(/\s+/g, "").toLowerCase();
           const normalizedCountry = stadium.country.replace(/\s+/g, "").toLowerCase();
@@ -45,7 +47,7 @@ export default function StadiumsTab() {
           return (
             normalizedName.includes(normalizedQuery) ||
             normalizedCity.includes(normalizedQuery) ||
-            normalizedCountry.includes(normalizedQuery)
+            normalizedCountry.startsWith(normalizedQuery)
           );
         })
       : stadiums;

@@ -159,14 +159,15 @@ export default function GroupsTab() {
   /**
    * 팀이 검색어와 일치하는지 확인 (팀 이름 또는 선수 이름으로 검색)
    * 띄어쓰기를 제거하고 검색 (예: "손 흥민" → "손흥민"으로 검색)
-   * 개선된 fuzzy matching: 연속된 부분 문자열 또는 순서대로 포함된 문자 매칭
+   * 국가 이름 검색은 앞글자부터 시작해야 함 (startsWith 기반)
+   * 선수 이름 검색은 fuzzy matching 사용
    */
   const matchesSearch = useCallback(
     (teamId: string, query: string): boolean => {
       if (!query) return true;
 
       // 검색어에서 띄어쓰기 제거 및 소문자 변환
-      const normalizedQuery = query.replace(/\s+/g, "").toLowerCase();
+      const normalizedQuery = query.trim().replace(/\s+/g, "").toLowerCase();
 
       const country = getCountryById(teamId);
       if (!country) {
@@ -177,11 +178,11 @@ export default function GroupsTab() {
         return fuzzyMatch(playoffName, normalizedQuery);
       }
 
-      // 팀 이름으로 검색 (띄어쓰기 제거)
+      // 팀 이름으로 검색 (띄어쓰기 제거, 앞글자부터 시작해야 함)
       const normalizedCountryName = country.name
         .replace(/\s+/g, "")
         .toLowerCase();
-      if (fuzzyMatch(normalizedCountryName, normalizedQuery)) {
+      if (normalizedCountryName.startsWith(normalizedQuery)) {
         return true;
       }
 
@@ -281,19 +282,20 @@ export default function GroupsTab() {
 
   // 검색어에 맞는 국가 목록 (국가 이름으로 검색했을 때)
   // 성능 최적화: useMemo로 검색 결과 캐싱
+  // 국가 이름 검색은 앞글자부터 시작해야 함 (startsWith 기반)
   const searchedCountries = useMemo(() => {
     if (!searchQuery) return [];
 
-    const normalizedQuery = searchQuery.replace(/\s+/g, "").toLowerCase();
+    const normalizedQuery = searchQuery.trim().replace(/\s+/g, "").toLowerCase();
     const results: Array<{ countryId: string; countryName: string }> = [];
 
     // 모든 국가를 순회하며 국가 이름으로 검색
-    // 개선된 fuzzy matching 사용: 연속된 부분 문자열 또는 순서대로 포함된 문자 매칭
+    // 앞글자부터 시작하는 검색만 허용
     countries.forEach((country) => {
       const normalizedCountryName = country.name
         .replace(/\s+/g, "")
         .toLowerCase();
-      if (fuzzyMatch(normalizedCountryName, normalizedQuery)) {
+      if (normalizedCountryName.startsWith(normalizedQuery)) {
         results.push({
           countryId: country.id,
           countryName: country.name,
