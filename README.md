@@ -20,9 +20,9 @@ Next.js App Router + TypeScript 기반의 2026 북중미 월드컵 정보 통합
 - **사용 위치**: `PotsTab` (포트별 팀 정보 화면)
 - **API 엔드포인트**:
   - `GET /api/worldcup/teams` - 포트별 팀 목록 (team.id, team.name, team.crest)
-  - `GET /api/worldcup/teams/:id/players` - 선수 명단 (포트 화면에서 국가 클릭 시)
 - **매칭 기준**: `team.id` (숫자) - 유일한 식별자
-- **국기 이미지**: `team.crest` (API 제공) → 로컬 `Flag` 컴포넌트로 변환
+- **국기 이미지**: API의 `team.crest` → 로컬 `Flag` 컴포넌트로 변환하여 사용
+- **선수 명단 API**: **완전 비활성화** (현재 사용하지 않음)
 
 #### 2. 프론트엔드 Data 파일 사용
 
@@ -43,6 +43,12 @@ Next.js App Router + TypeScript 기반의 2026 북중미 월드컵 정보 통합
 - **국기 이미지**: 로컬 data 파일의 `flagImageUrl` 또는 ISO 코드 기반 flagcdn.com URL 사용
 - **국가 이름**: 로컬 data 파일의 `nameKo` (한글명) 사용
 
+#### 4. API 장애 대응 전략
+
+- **포트 화면만 API 사용**: 백엔드 장애 시에도 조별 경기, FIFA 랭킹 화면은 정상 작동
+- **안전한 Fallback**: API 실패 시 throw 하지 않고 에러 UI 표시
+- **로컬 데이터 우선**: 국기, 국가명 등은 모두 로컬 데이터 사용
+
 ## 프로젝트 구조
 
 ```
@@ -52,7 +58,7 @@ Next.js App Router + TypeScript 기반의 2026 북중미 월드컵 정보 통합
 │   ├── globals.css             # 글로벌 스타일
 │   ├── teams/
 │   │   └── [id]/
-│   │       └── page.tsx        # 팀 상세 페이지 (선수 명단)
+│   │       └── page.tsx        # 팀 상세 페이지
 │   ├── stadiums/
 │   │   └── [id]/
 │   │       ├── page.tsx        # 경기장 상세 페이지
@@ -118,9 +124,9 @@ Next.js App Router + TypeScript 기반의 2026 북중미 월드컵 정보 통합
 
 - 포트별 팀 정보 표시 (국기 + 국가명)
 - **백엔드 API 사용**: `fetchPotsTeams()` - 팀 목록 조회
-- 국가 클릭 시 **선수 명단 모달 표시** (API: `fetchPlayersByTeamId()`)
 - 검색 기능: 팀 이름으로 검색
 - 포트 필터: 특정 포트만 보기
+- **선수 명단 기능**: 비활성화 (현재 사용하지 않음)
 
 ### 2. 조별 경기(Groups) 화면
 
@@ -152,12 +158,6 @@ Next.js App Router + TypeScript 기반의 2026 북중미 월드컵 정보 통합
 - flagcdn.com을 통한 이미지 자동 생성 (ISO 코드 기반)
 - 모든 화면에서 일관된 국기 이미지 사용
 
-### 6. 모달 스크롤 제어
-
-- 모달이 열릴 때 배경 스크롤 자동 차단
-- 모달 내부 스크롤만 활성화
-- 스크롤 끝에 도달해도 배경 스크롤 방지
-
 ## 시작하기
 
 ### 설치
@@ -178,9 +178,58 @@ NEXT_PUBLIC_API_BASE_URL=https://worldcupback-production.up.railway.app
 **주의사항:**
 
 - `.env.local` 파일은 `.gitignore`에 포함되어 Git에 커밋되지 않습니다
-- Vercel 배포 시에는 Vercel 대시보드에서 환경변수를 설정해야 합니다
 - 환경변수가 설정되지 않으면 개발 서버 실행 시 에러가 발생할 수 있습니다
 - **포트 화면만 API를 사용**하므로, API가 다운되어도 다른 화면(조별 경기, FIFA 랭킹)은 정상 작동합니다
+
+### Vercel 배포 시 환경변수 설정
+
+Vercel에 배포할 때는 **반드시 Vercel 대시보드에서 환경변수를 설정**해야 합니다:
+
+1. **Vercel 대시보드 접속**: https://vercel.com/dashboard
+2. **프로젝트 선택** → **Settings** → **Environment Variables** 이동
+3. **다음 환경변수 추가**:
+   - **Name**: `NEXT_PUBLIC_API_BASE_URL`
+   - **Value**: `https://worldcupback-production.up.railway.app`
+   - **Environment**: `Production`, `Preview`, `Development` 모두 선택
+4. **저장** 후 **재배포** 실행
+
+**⚠️ 중요 사항:**
+
+- 환경변수 추가 후 반드시 재배포해야 환경변수가 적용됩니다
+- `NEXT_PUBLIC_` 접두사가 있는 환경변수는 클라이언트 번들에 주입되므로 빌드 시점에 설정되어야 합니다
+- 환경변수 변경 후에는 자동 재배포가 필요합니다 (또는 수동으로 재배포 실행)
+
+### 환경변수 확인 방법
+
+배포 후 브라우저 콘솔(F12)에서 다음을 확인하세요:
+
+**정상인 경우:**
+
+```javascript
+// 콘솔에서 확인
+console.log(process.env.NEXT_PUBLIC_API_BASE_URL);
+// 예상 출력: "https://worldcupback-production.up.railway.app"
+```
+
+또는 콘솔에서 다음 메시지가 보이면 정상입니다:
+
+```
+[ENV OK] 환경 변수 정상 주입 확인
+```
+
+**문제가 있는 경우:**
+
+```javascript
+// 콘솔에서 확인
+console.log(process.env.NEXT_PUBLIC_API_BASE_URL);
+// 출력: undefined
+```
+
+콘솔에 다음과 같은 에러가 보이면 환경변수가 설정되지 않은 것입니다:
+
+```
+[ENV ERROR] NEXT_PUBLIC_API_BASE_URL 환경 변수가 설정되지 않았습니다.
+```
 
 ### 개발 서버 실행
 
@@ -220,20 +269,6 @@ npm run dev
 4. Flag 컴포넌트 - 로컬 flagImageUrl 또는 ISO 코드로 국기 표시
 ```
 
-### 선수 명단 데이터 흐름 (포트 화면)
-
-```
-1. 사용자가 포트 화면에서 국가 클릭
-   ↓
-2. handleTeamClick() - teamId 전달
-   ↓
-3. fetchPlayersByTeamId(teamId) 호출 (API)
-   ↓
-4. 선수 명단 모달 표시
-   ↓
-5. PlayerList 컴포넌트로 선수 목록 렌더링
-```
-
 ## 주요 설계 원칙
 
 ### 1. API 사용 최소화
@@ -254,11 +289,78 @@ npm run dev
 - 국가 이름: 로컬 `nameKo` (한글명) 사용
 - API의 `team.crest`는 로컬 데이터로 변환하여 사용
 
-### 4. 모달 스크롤 제어
+### 4. 안전한 에러 처리
 
-- 모달이 열릴 때 배경 스크롤 차단
-- 모달 내부 스크롤만 활성화
-- 사용자 경험 향상
+- API 실패 시 throw 하지 않고 에러 UI 표시
+- 백엔드 장애 시에도 앱 전체가 깨지지 않도록 설계
+
+## 트러블슈팅
+
+### API가 작동하지 않는 경우 (Vercel 배포)
+
+**증상**: 로컬에서는 API가 작동하는데 Vercel 배포 후 작동하지 않음
+
+**해결 방법:**
+
+#### 1️⃣ 환경변수 설정 여부 확인
+
+- Vercel 대시보드 → 프로젝트 → Settings → Environment Variables
+- `NEXT_PUBLIC_API_BASE_URL` 환경변수가 설정되어 있는지 확인
+- 값이 올바른지 확인: `https://worldcupback-production.up.railway.app`
+
+#### 2️⃣ NEXT*PUBLIC* 접두어 확인
+
+- 환경변수 이름이 정확히 `NEXT_PUBLIC_API_BASE_URL`인지 확인
+- `NEXT_PUBLIC_` 접두사가 없으면 클라이언트 번들에 주입되지 않습니다
+
+#### 3️⃣ 재배포 여부 확인
+
+- 환경변수 추가/수정 후 **반드시 재배포**해야 적용됩니다
+- Vercel 대시보드 → 프로젝트 → Deployments → 최신 배포 옆의 "..." 메뉴 → "Redeploy" 선택
+- 또는 Git에 새로운 커밋을 push하면 자동 재배포됩니다
+
+#### 4️⃣ 네트워크 탭에서 API URL 확인
+
+- 배포된 사이트에서 F12 → Network 탭 확인
+- API 호출 시 실제 호출되는 URL이 올바른지 확인
+- 예상 URL: `https://worldcupback-production.up.railway.app/api/worldcup/teams`
+
+#### 5️⃣ 콘솔 에러 메시지 확인
+
+**환경변수 미설정:**
+
+```
+[ENV ERROR] NEXT_PUBLIC_API_BASE_URL 환경 변수가 설정되지 않았습니다.
+실행 환경: 클라이언트 / production
+Vercel 배포 환경: Vercel 대시보드 > Settings > Environment Variables에서 설정하세요.
+```
+
+**환경변수 정상:**
+
+```
+[ENV OK] 환경 변수 정상 주입 확인
+apiBaseUrl: "https://worldcupback-production.up.railway.app"
+```
+
+**API 호출 실패 (환경변수는 정상):**
+
+```
+[API 호출] fetchPotsTeams { url: "https://worldcupback-production.up.railway.app/api/worldcup/teams" }
+Failed to fetch pots teams: 500 Internal Server Error
+```
+
+### API 장애 대응
+
+**500 / 404 발생 시:**
+
+- 포트 화면에서는 에러 메시지가 표시되지만, 앱 전체가 깨지지 않습니다
+- 조별 경기, FIFA 랭킹 화면은 로컬 데이터를 사용하므로 정상 작동합니다
+- API 장애 시에도 대부분의 기능은 사용 가능합니다
+
+**참고:**
+
+- API는 **포트(Pots) 화면에서만 사용**되므로, 다른 화면은 API 없이도 정상 작동합니다
+- 환경변수가 설정되지 않아도 앱은 실행되지만, 포트 화면에서 API 에러가 발생합니다
 
 ## 기술적 특징
 

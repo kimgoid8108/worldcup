@@ -14,10 +14,8 @@
 import type {
   TeamsResponse,
   FrontTeam,
-  PlayersResponse,
-  FrontPlayersResponse,
 } from "@/src/types/api";
-import { mapApiTeams, mapApiPlayersResponse } from "./apiMappers";
+import { mapApiTeams } from "./apiMappers";
 
 /**
  * API Base URL 가져오기
@@ -188,13 +186,15 @@ export async function fetchPotsTeams(): Promise<{ teams: FrontTeam[] }> {
 }
 
 /* ============================================
- * 선수 관련 API
+ * 선수 관련 API - 완전 비활성화
  * ============================================
  *
- * ⚠️ 중요: 선수 명단 API는 포트(Pots) 화면에서만 사용됩니다.
+ * ⚠️ 중요: 선수 명단 API는 현재 사용하지 않습니다.
+ * 아래 코드는 참고용으로 주석 처리되어 있습니다.
  */
 
-// 선수 데이터 캐시 관련 코드
+/*
+// 선수 데이터 캐시 관련 코드 (비활성화)
 interface CacheEntry {
   data: FrontPlayersResponse;
   timestamp: number;
@@ -206,101 +206,14 @@ const CACHE_TTL = 5 * 60 * 1000; // 5분
 let lastRequestTime = 0;
 const REQUEST_DELAY = 500; // 500ms
 
-/**
- * 요청 간격 제어 (API 부하 방지)
- */
-async function waitForRequestDelay(): Promise<void> {
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-  if (timeSinceLastRequest < REQUEST_DELAY) {
-    const waitTime = REQUEST_DELAY - timeSinceLastRequest;
-    await new Promise((resolve) => setTimeout(resolve, waitTime));
-  }
-  lastRequestTime = Date.now();
-}
-
-/**
- * team.id로 선수 명단 조회
- * GET /api/worldcup/teams/:id/players
- *
- * ⚠️ 중요: 이 함수는 포트(Pots) 화면에서만 사용됩니다.
- *
- * @param teamId - team.id (number)
- * @param fallbackTeam - API 실패 시 사용할 fallback 팀 정보
- * @returns 선수 명단 데이터 (프론트엔드 타입으로 변환된 데이터)
- */
 export async function fetchPlayersByTeamId(
   teamId: number,
   fallbackTeam?: { id: number; name: string; crest: string }
 ): Promise<FrontPlayersResponse> {
-  // 캐시 확인
-  const cached = playersCache.get(teamId);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    console.log("[API 캐시] 선수 데이터 캐시 사용", { teamId });
-    return cached.data;
-  }
-
-  // 요청 간격 제어
-  await waitForRequestDelay();
-
-  const url = buildApiUrl(`/worldcup/teams/${teamId}/players`);
-  console.log("[API 호출] fetchPlayersByTeamId", { teamId, url });
-
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch players: ${response.status} ${response.statusText}`
-      );
-    }
-
-    const apiResponse: PlayersResponse = await response.json();
-
-    // 프론트엔드 타입으로 변환
-    const mappedData = mapApiPlayersResponse(
-      apiResponse,
-      teamId,
-      fallbackTeam
-    );
-
-    if (!mappedData) {
-      throw new Error("선수 데이터 변환 실패");
-    }
-
-    // 캐시 저장
-    playersCache.set(teamId, {
-      data: mappedData,
-      timestamp: Date.now(),
-    });
-
-    console.log("[API 변환] fetchPlayersByTeamId 변환 완료", {
-      teamId: mappedData.team.id,
-      teamName: mappedData.team.name,
-      playersCount: mappedData.players.length,
-    });
-
-    return mappedData;
-  } catch (error) {
-    console.error("[API 에러] fetchPlayersByTeamId 실패", { teamId, error });
-
-    // fallbackTeam이 있으면 빈 선수 목록과 함께 반환
-    if (fallbackTeam) {
-      return {
-        team: fallbackTeam,
-        players: [],
-        supported: false,
-      };
-    }
-
-    throw error;
-  }
+  // 선수 API 비활성화
+  throw new Error("선수 명단 API는 현재 사용하지 않습니다.");
 }
+*/
 
 /* ============================================
  * Standings/FIFA Rankings API - 완전 비활성화
