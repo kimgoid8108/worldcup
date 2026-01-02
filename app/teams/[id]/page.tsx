@@ -31,6 +31,13 @@ export default function TeamDetailPage() {
     ? Number(teamIdParam)
     : null;
 
+  console.log("[컴포넌트 마운트] TeamDetailPage 렌더링", {
+    params,
+    teamIdParam,
+    teamId,
+    paramsType: typeof params?.id,
+  });
+
   const [teamStanding, setTeamStanding] = useState<TeamStanding | null>(null);
   const [players, setPlayers] = useState<PlayersResponse | null>(null);
   const [playersList, setPlayersList] = useState<PlayersResponse["players"]>([]);
@@ -40,53 +47,80 @@ export default function TeamDetailPage() {
 
   // 플레이오프 국가 체크 및 데이터 로드
   useEffect(() => {
-    async function loadTeamData() {
-      console.log("[렌더링 시점] useEffect 실행", { teamIdParam, teamId });
+    console.log("[useEffect 트리거] 의존성 변경", { teamId, teamIdParam });
 
-      // 1. teamId가 undefined이거나 유효하지 않은 경우
+    async function loadTeamData() {
+      console.log("[데이터 로드 시작] loadTeamData 함수 실행", { teamIdParam, teamId });
+
+      // 1. teamId가 undefined이거나 유효하지 않은 경우 - fetch 실행 차단
       if (!teamIdParam || teamId === null || isNaN(teamId)) {
-        console.log("[방어 로직] teamId가 유효하지 않음", { teamIdParam, teamId });
+        console.warn("[방어 로직] teamId가 유효하지 않음 - fetch 실행 차단", {
+          teamIdParam,
+          teamId,
+          teamIdType: typeof teamId,
+          isNaN: isNaN(Number(teamIdParam || "")),
+        });
         setError("유효하지 않은 국가 ID입니다.");
         setLoading(false);
         return;
       }
 
-      // 2. 플레이오프 국가 체크 (team.id === null)
+      // 2. 플레이오프 국가 체크 (team.id === null) - fetch 실행 차단
       if (isPlayoffTeam(teamId)) {
-        console.log("[방어 로직] 플레이오프 국가 - players API 호출 차단", { teamId });
+        console.warn("[방어 로직] 플레이오프 국가 - players API 호출 차단", { teamId });
         setError("플레이오프 국가는 접근할 수 없습니다.");
         setLoading(false);
         return;
       }
 
-      try {
-        setLoading(true);
-        setError(null);
+      // 3. teamId가 유효한 경우에만 fetch 실행
+      console.log("[State 변경] loading = true, error = null", { teamId });
+      setLoading(true);
+      setError(null);
 
-        console.log("[API 호출] standings API 호출 시작", { teamId });
+      try {
+        console.log("[API 호출 시작] standings API 호출", { teamId, timestamp: new Date().toISOString() });
 
         // 1. 국가 메타 정보 로드 (standings API)
         const standingsData = await fetchStandings();
-        console.log("[API Response] standings", standingsData);
+        console.log("[API Response] standings API 응답 수신", {
+          standingsCount: standingsData.standings?.length || 0,
+          data: standingsData,
+        });
 
         const standing = standingsData.standings.find(
           (s) => s.team.id === teamId
         );
 
         if (!standing) {
-          console.log("[에러] 국가를 찾을 수 없음", { teamId });
+          console.error("[에러] 국가를 찾을 수 없음", {
+            teamId,
+            availableIds: standingsData.standings.map(s => s.team.id),
+          });
           setError("국가를 찾을 수 없습니다.");
           setLoading(false);
           return;
         }
 
+        console.log("[State 변경] setTeamStanding 호출", { standing });
         setTeamStanding(standing);
-        console.log("[State] teamStanding 설정 완료", standing);
+        console.log("[State] teamStanding 설정 완료", {
+          teamId: standing.team.id,
+          teamName: standing.team.name,
+        });
 
         // 2. 선수단 정보 로드 (players API - 유일한 선수 데이터 소스)
-        console.log("[API 호출] players API 호출 시작", { teamId });
+        console.log("[API 호출 시작] players API 호출", {
+          teamId,
+          url: `[API 호출 로그에서 확인]`,
+          timestamp: new Date().toISOString(),
+        });
         const playersData = await fetchPlayersByTeamId(teamId);
-        console.log("[API Response] players", playersData);
+        console.log("[API Response] players API 응답 수신", {
+          team: playersData.team,
+          playersCount: playersData.players?.length || 0,
+          data: playersData,
+        });
 
         // API response 구조 확인 및 처리
         // 실제 API가 { data: { players: [...] } } 구조일 수도 있으므로 체크
@@ -114,25 +148,48 @@ export default function TeamDetailPage() {
           }
         }
 
+        console.log("[State 변경] setPlayers, setPlayersList 호출", {
+          playersResponse: playersData,
+          playersList: actualPlayers,
+          playersCount: actualPlayers.length,
+        });
         setPlayers(playersData);
         setPlayersList(actualPlayers);
         console.log("[State] players 설정 완료", {
           playersResponse: playersData,
           playersList: actualPlayers,
-          playersCount: actualPlayers.length
+          playersCount: actualPlayers.length,
         });
       } catch (err) {
-        console.error("[에러] 데이터 로드 실패", err);
+        console.error("[에러] 데이터 로드 실패", {
+          error: err,
+          errorMessage: err instanceof Error ? err.message : String(err),
+          teamId,
+          stack: err instanceof Error ? err.stack : undefined,
+        });
         setError(
           err instanceof Error ? err.message : "데이터를 불러오는 중 오류가 발생했습니다."
         );
       } finally {
+        console.log("[State 변경] setLoading(false) 호출", { teamId });
         setLoading(false);
-        console.log("[렌더링 시점] 로딩 완료", { loading: false });
+        console.log("[렌더링 시점] 로딩 완료", {
+          loading: false,
+          teamId,
+          hasTeamStanding: !!teamStanding,
+          hasPlayers: !!players,
+          playersListLength: playersList.length,
+        });
       }
     }
 
-    loadTeamData();
+    // teamId가 유효한 경우에만 실행
+    if (teamId !== null && !isNaN(teamId)) {
+      loadTeamData();
+    } else {
+      console.warn("[useEffect] teamId가 유효하지 않아 loadTeamData 실행 안 함", { teamId, teamIdParam });
+      setLoading(false);
+    }
   }, [teamId, teamIdParam]);
 
   const handlePlayerClick = useCallback((player: any, index: number) => {

@@ -39,13 +39,22 @@ export default function SearchResults({
   }, [searchQuery, standings]);
 
   const handleTeamClick = (standing: TeamStanding) => {
+    console.log("[클릭 이벤트] 국가 클릭", {
+      teamId: standing.team.id,
+      teamName: standing.team.name,
+      isPlayoff: isPlayoffTeam(standing.team.id),
+    });
+
     // 플레이오프 국가는 클릭 불가
     if (isPlayoffTeam(standing.team.id)) {
+      console.warn("[클릭 차단] 플레이오프 국가는 클릭 불가", { teamId: standing.team.id });
       return;
     }
 
     // team.id로 이동
-    router.push(`/teams/${standing.team.id}`);
+    const targetPath = `/teams/${standing.team.id}`;
+    console.log("[라우팅] router.push 호출", { targetPath, teamId: standing.team.id });
+    router.push(targetPath);
   };
 
   if (!searchQuery) {
