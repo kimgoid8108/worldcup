@@ -366,15 +366,40 @@ export default function GroupsTab() {
     });
   }, []);
 
+  /**
+   * 경기 일정 검색: 국가 이름만 검색 대상으로 사용
+   * - 홈팀(team1)과 원정팀(team2)의 국가 이름만 검색
+   * - startsWith 기준으로 앞글자 매칭만 허용
+   * - 경기장, 날짜, 기타 텍스트는 검색 대상에서 제외
+   * - normalizeText를 사용하여 유니코드 정규화 및 whitespace 제거
+   */
+  const matchesCountryName = useCallback((teamId: string, query: string): boolean => {
+    if (!query) return true;
+
+    // 검색어 정규화 (NFC, 모든 whitespace 제거, 소문자 변환)
+    const normalizedQuery = normalizeText(query);
+
+    const country = getCountryById(teamId);
+    if (!country) {
+      // 플레이오프 승자는 검색 대상에서 제외 (국가 이름만 검색)
+      return false;
+    }
+
+    // 국가 이름만 검색 (앞글자부터 시작해야 함)
+    const normalizedCountryName = normalizeText(country.name);
+    return normalizedCountryName.startsWith(normalizedQuery);
+  }, []);
+
   // 검색어와 날짜에 따라 필터링된 경기 일정
   const filteredMatchesByDate = useMemo(() => {
-    // 먼저 검색어로 필터링
+    // 먼저 검색어로 필터링 (국가 이름만 검색)
     let filtered = sortedMatchesByDate;
     if (matchSearchQuery) {
       filtered = sortedMatchesByDate.filter((match) => {
+        // 홈팀(team1) 또는 원정팀(team2)의 국가 이름만 검색
         return (
-          matchesSearch(match.team1, matchSearchQuery) ||
-          matchesSearch(match.team2, matchSearchQuery)
+          matchesCountryName(match.team1, matchSearchQuery) ||
+          matchesCountryName(match.team2, matchSearchQuery)
         );
       });
     }
@@ -397,7 +422,7 @@ export default function GroupsTab() {
     });
 
     return grouped;
-  }, [sortedMatchesByDate, matchSearchQuery, selectedDate, matchesSearch]);
+  }, [sortedMatchesByDate, matchSearchQuery, selectedDate, matchesCountryName]);
 
   return (
     <div style={{ overflow: 'visible' }}>
