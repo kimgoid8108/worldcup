@@ -24,10 +24,16 @@ import { normalizeText } from "@/src/utils/normalizeText";
 export default function TeamDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const teamId = params?.id ? Number(params.id) : null;
+
+  // teamId 파싱 및 유효성 검사
+  const teamIdParam = params?.id;
+  const teamId = teamIdParam && !isNaN(Number(teamIdParam))
+    ? Number(teamIdParam)
+    : null;
 
   const [teamStanding, setTeamStanding] = useState<TeamStanding | null>(null);
   const [players, setPlayers] = useState<PlayersResponse | null>(null);
+  const [playersList, setPlayersList] = useState<PlayersResponse["players"]>([]);
   const [formation, setFormation] = useState<Formation>("4-3-3");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +41,19 @@ export default function TeamDetailPage() {
   // 플레이오프 국가 체크 및 데이터 로드
   useEffect(() => {
     async function loadTeamData() {
-      if (!teamId || isPlayoffTeam(teamId)) {
+      console.log("[렌더링 시점] useEffect 실행", { teamIdParam, teamId });
+
+      // 1. teamId가 undefined이거나 유효하지 않은 경우
+      if (!teamIdParam || teamId === null || isNaN(teamId)) {
+        console.log("[방어 로직] teamId가 유효하지 않음", { teamIdParam, teamId });
+        setError("유효하지 않은 국가 ID입니다.");
+        setLoading(false);
+        return;
+      }
+
+      // 2. 플레이오프 국가 체크 (team.id === null)
+      if (isPlayoffTeam(teamId)) {
+        console.log("[방어 로직] 플레이오프 국가 - players API 호출 차단", { teamId });
         setError("플레이오프 국가는 접근할 수 없습니다.");
         setLoading(false);
         return;
@@ -45,34 +63,77 @@ export default function TeamDetailPage() {
         setLoading(true);
         setError(null);
 
+        console.log("[API 호출] standings API 호출 시작", { teamId });
+
         // 1. 국가 메타 정보 로드 (standings API)
         const standingsData = await fetchStandings();
+        console.log("[API Response] standings", standingsData);
+
         const standing = standingsData.standings.find(
           (s) => s.team.id === teamId
         );
 
         if (!standing) {
+          console.log("[에러] 국가를 찾을 수 없음", { teamId });
           setError("국가를 찾을 수 없습니다.");
           setLoading(false);
           return;
         }
 
         setTeamStanding(standing);
+        console.log("[State] teamStanding 설정 완료", standing);
 
         // 2. 선수단 정보 로드 (players API - 유일한 선수 데이터 소스)
+        console.log("[API 호출] players API 호출 시작", { teamId });
         const playersData = await fetchPlayersByTeamId(teamId);
+        console.log("[API Response] players", playersData);
+
+        // API response 구조 확인 및 처리
+        // 실제 API가 { data: { players: [...] } } 구조일 수도 있으므로 체크
+        let actualPlayers: PlayersResponse["players"] = [];
+
+        if (playersData && typeof playersData === 'object') {
+          // PlayersResponse 구조: { team: {...}, players: [...] }
+          if ('players' in playersData && Array.isArray(playersData.players)) {
+            actualPlayers = playersData.players;
+            console.log("[데이터 처리] players 배열 발견", actualPlayers.length);
+          }
+          // data.players 구조일 경우
+          else if ('data' in playersData &&
+                   typeof playersData.data === 'object' &&
+                   playersData.data !== null &&
+                   'players' in playersData.data &&
+                   Array.isArray((playersData.data as any).players)) {
+            actualPlayers = (playersData.data as any).players;
+            console.log("[데이터 처리] data.players 배열 발견", actualPlayers.length);
+          }
+          // 직접 players 배열일 경우
+          else if (Array.isArray(playersData)) {
+            actualPlayers = playersData as any;
+            console.log("[데이터 처리] 직접 배열 구조", actualPlayers.length);
+          }
+        }
+
         setPlayers(playersData);
+        setPlayersList(actualPlayers);
+        console.log("[State] players 설정 완료", {
+          playersResponse: playersData,
+          playersList: actualPlayers,
+          playersCount: actualPlayers.length
+        });
       } catch (err) {
+        console.error("[에러] 데이터 로드 실패", err);
         setError(
           err instanceof Error ? err.message : "데이터를 불러오는 중 오류가 발생했습니다."
         );
       } finally {
         setLoading(false);
+        console.log("[렌더링 시점] 로딩 완료", { loading: false });
       }
     }
 
     loadTeamData();
-  }, [teamId]);
+  }, [teamId, teamIdParam]);
 
   const handlePlayerClick = useCallback((player: any, index: number) => {
     // 선수 상세 정보 표시 로직 (필요시 구현)
@@ -106,10 +167,21 @@ export default function TeamDetailPage() {
     );
   }
 
-  if (!teamStanding || !players) {
+  // 렌더링 시점 로그
+  console.log("[렌더링 시점] 컴포넌트 렌더링", {
+    loading,
+    error,
+    teamStanding: teamStanding ? "있음" : "없음",
+    players: players ? "있음" : "없음",
+    playersListLength: playersList.length,
+  });
+
+  // 안전한 렌더링: teamStanding이 없으면 표시하지 않음
+  if (!teamStanding) {
     return null;
   }
 
+  // playersList가 비어있어도 UI는 표시 (안전한 렌더링)
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -127,6 +199,10 @@ export default function TeamDetailPage() {
               src={teamStanding.crest}
               alt={teamStanding.team.name}
               className="w-16 h-16 object-contain"
+              onError={(e) => {
+                console.error("[이미지 에러] 국기 이미지 로드 실패", teamStanding.crest);
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
             />
             <div>
               <h1 className="text-3xl font-bold text-gray-800">
@@ -157,9 +233,9 @@ export default function TeamDetailPage() {
         {/* 스쿼드 빌더 */}
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">스쿼드</h2>
-          {players.players.length > 0 ? (
+          {playersList && playersList.length > 0 ? (
             <ImageSquadBuilder
-              players={players.players.map((p) => ({
+              players={playersList.map((p) => ({
                 id: p.id,
                 name: p.name,
                 position: p.position,
@@ -169,31 +245,46 @@ export default function TeamDetailPage() {
               onPlayerClick={handlePlayerClick}
             />
           ) : (
-            <p className="text-gray-600">선수 정보가 없습니다.</p>
+            <div className="text-center py-8">
+              <p className="text-gray-600">선수 정보가 없습니다.</p>
+              {players && (
+                <p className="text-sm text-gray-500 mt-2">
+                  API 응답은 수신되었으나 선수 데이터가 비어있습니다.
+                </p>
+              )}
+            </div>
           )}
         </div>
 
         {/* 선수 명단 */}
         <div className="mt-6 bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">선수 명단</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {players.players.map((player) => (
-              <div
-                key={player.id}
-                className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-              >
-                <h3 className="font-semibold text-gray-800">{player.name}</h3>
-                {player.nameEn && (
-                  <p className="text-sm text-gray-600">{player.nameEn}</p>
-                )}
-                <p className="text-sm text-gray-500 mt-1">
-                  {player.position}
-                  {player.age && ` · ${player.age}세`}
-                  {player.club && ` · ${player.club}`}
-                </p>
-              </div>
-            ))}
-          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            선수 명단 {playersList.length > 0 && `(${playersList.length}명)`}
+          </h2>
+          {playersList && playersList.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {playersList.map((player) => (
+                <div
+                  key={player.id}
+                  className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                >
+                  <h3 className="font-semibold text-gray-800">{player.name}</h3>
+                  {player.nameEn && (
+                    <p className="text-sm text-gray-600">{player.nameEn}</p>
+                  )}
+                  <p className="text-sm text-gray-500 mt-1">
+                    {player.position}
+                    {player.age && ` · ${player.age}세`}
+                    {player.club && ` · ${player.club}`}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-600">선수 명단이 없습니다.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
