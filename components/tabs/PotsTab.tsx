@@ -10,13 +10,15 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { pots } from "@/data/pots";
 import { getCountryById } from "@/data/countries";
 import { getPlayersByCountry } from "@/data/players";
 import CountryModal from "@/components/modals/CountryModal";
 import Flag from "@/components/ui/Flag";
 import { normalizeText } from "@/src/utils/normalizeText";
+import { fetchStandings, fetchPlayersByTeamId, isPlayoffTeam } from "@/src/utils/api";
+import type { TeamStanding, PlayersResponse } from "@/src/types/api";
 
 export default function PotsTab() {
   // 선택된 국가 ID (국가 모달 표시용)
@@ -25,6 +27,13 @@ export default function PotsTab() {
   const [searchQuery, setSearchQuery] = useState("");
   // 선택된 포트 필터 (null이면 전체 표시)
   const [selectedPotFilter, setSelectedPotFilter] = useState<number | null>(null);
+
+  // 선수 명단 표시용: 선택된 teamId (number)
+  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
+  const [selectedTeamStanding, setSelectedTeamStanding] = useState<TeamStanding | null>(null);
+  const [players, setPlayers] = useState<PlayersResponse | null>(null);
+  const [playersList, setPlayersList] = useState<PlayersResponse["players"]>([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(false);
 
   /**
    * 플레이오프 승자 ID를 한글 이름으로 변환
@@ -119,6 +128,125 @@ export default function PotsTab() {
       return normalizedPlayerName.includes(normalizedQuery) || normalizedPlayerNameEn.includes(normalizedQuery);
     });
   };
+
+  // standings API 데이터 로드 (국가 메타 정보)
+  const [standings, setStandings] = useState<TeamStanding[]>([]);
+  const [standingsLoaded, setStandingsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadStandings() {
+      try {
+        console.log("[PotsTab] standings API 호출 시작");
+        const standingsData = await fetchStandings();
+        console.log("[PotsTab] standings API 응답 수신", {
+          count: standingsData.standings?.length || 0,
+        });
+        setStandings(standingsData.standings || []);
+        setStandingsLoaded(true);
+      } catch (err) {
+        console.error("[PotsTab] standings API 호출 실패", err);
+      }
+    }
+    loadStandings();
+  }, []);
+
+  // selectedTeamId 변경 시 players API 호출
+  useEffect(() => {
+    console.log("[PotsTab] selectedTeamId 변경 감지", { selectedTeamId });
+
+    async function loadPlayers() {
+      // teamId가 없거나 플레이오프 국가인 경우 fetch 실행 안 함
+      if (!selectedTeamId || isPlayoffTeam(selectedTeamId)) {
+        console.log("[PotsTab] teamId가 유효하지 않아 players API 호출 차단", {
+          selectedTeamId,
+          isPlayoff: isPlayoffTeam(selectedTeamId),
+        });
+        setPlayers(null);
+        setPlayersList([]);
+        setLoadingPlayers(false);
+        return;
+      }
+
+      try {
+        console.log("[PotsTab] players API 호출 시작", {
+          teamId: selectedTeamId,
+          timestamp: new Date().toISOString(),
+        });
+        setLoadingPlayers(true);
+        setPlayers(null);
+        setPlayersList([]);
+
+        const playersData = await fetchPlayersByTeamId(selectedTeamId);
+        console.log("[PotsTab] players API 응답 수신", {
+          team: playersData.team,
+          playersCount: playersData.players?.length || 0,
+        });
+
+        // API response 구조 확인 및 처리
+        let actualPlayers: PlayersResponse["players"] = [];
+        if (playersData && typeof playersData === 'object') {
+          if ('players' in playersData && Array.isArray(playersData.players)) {
+            actualPlayers = playersData.players;
+          } else if ('data' in playersData &&
+                     typeof playersData.data === 'object' &&
+                     playersData.data !== null &&
+                     'players' in playersData.data &&
+                     Array.isArray((playersData.data as any).players)) {
+            actualPlayers = (playersData.data as any).players;
+          } else if (Array.isArray(playersData)) {
+            actualPlayers = playersData as any;
+          }
+        }
+
+        console.log("[PotsTab] players state 설정", {
+          playersCount: actualPlayers.length,
+        });
+        setPlayers(playersData);
+        setPlayersList(actualPlayers);
+      } catch (err) {
+        console.error("[PotsTab] players API 호출 실패", {
+          error: err,
+          teamId: selectedTeamId,
+        });
+        setPlayers(null);
+        setPlayersList([]);
+      } finally {
+        setLoadingPlayers(false);
+        console.log("[PotsTab] players 로딩 완료", { teamId: selectedTeamId });
+      }
+    }
+
+    loadPlayers();
+  }, [selectedTeamId]);
+
+  // 국가 클릭 핸들러: countryId (string) → teamId (number) 변환
+  const handleCountryClick = useCallback((countryId: string) => {
+    console.log("[PotsTab] 국가 클릭", { countryId });
+
+    // standings에서 해당 국가의 team.id 찾기
+    const standing = standings.find((s) => {
+      const country = getCountryById(countryId);
+      if (!country) return false;
+      return s.team.name === country.name;
+    });
+
+    if (standing && standing.team.id !== null) {
+      console.log("[PotsTab] teamId 설정", {
+        countryId,
+        teamId: standing.team.id,
+        teamName: standing.team.name,
+      });
+      setSelectedTeamId(standing.team.id);
+      setSelectedTeamStanding(standing);
+    } else {
+      console.warn("[PotsTab] teamId를 찾을 수 없음", {
+        countryId,
+        standingsCount: standings.length,
+      });
+      setSelectedTeamId(null);
+      setSelectedTeamStanding(null);
+    }
+  }, [standings]);
 
   /**
    * 필터링된 포트 목록 (검색어 및 포트 필터 적용)
@@ -257,7 +385,10 @@ export default function PotsTab() {
                   return (
                     <button
                       key={country.id}
-                      onClick={() => setSelectedCountry(country.id)}
+                      onClick={() => {
+                        console.log("[PotsTab] 국가 클릭", { countryId: country.id, countryName: country.name });
+                        handleCountryClick(country.id);
+                      }}
                       className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col items-center justify-center gap-2 relative group"
                     >
                       <Flag country={country} size="lg" />
@@ -277,6 +408,74 @@ export default function PotsTab() {
         ) : (
           <div className="text-center py-8 text-gray-600">
             검색 결과가 없습니다.
+          </div>
+        )}
+
+        {/* 선수 명단 표시 섹션 */}
+        {selectedTeamId && selectedTeamStanding && (
+          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedTeamStanding.crest}
+                  alt={selectedTeamStanding.team.name}
+                  className="w-12 h-12 object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">
+                    {selectedTeamStanding.team.name} 선수 명단
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {selectedTeamStanding.group}조 · {selectedTeamStanding.position}위
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  console.log("[PotsTab] 선수 명단 닫기");
+                  setSelectedTeamId(null);
+                  setSelectedTeamStanding(null);
+                  setPlayers(null);
+                  setPlayersList([]);
+                }}
+                className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                닫기
+              </button>
+            </div>
+
+            {loadingPlayers ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <p className="text-gray-600">선수 정보를 불러오는 중...</p>
+              </div>
+            ) : playersList && playersList.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {playersList.map((player) => (
+                  <div
+                    key={player.id}
+                    className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                  >
+                    <h4 className="font-semibold text-gray-800">{player.name}</h4>
+                    {player.nameEn && (
+                      <p className="text-sm text-gray-600">{player.nameEn}</p>
+                    )}
+                    <p className="text-sm text-gray-500 mt-1">
+                      {player.position}
+                      {player.age && ` · ${player.age}세`}
+                      {player.club && ` · ${player.club}`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-600">
+                {players ? "선수 정보가 없습니다." : "선수 정보를 불러올 수 없습니다."}
+              </div>
+            )}
           </div>
         )}
       </div>
