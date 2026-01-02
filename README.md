@@ -17,6 +17,21 @@ Next.js App Router를 사용한 경기장 상세 페이지 프로젝트입니다
 npm install
 ```
 
+### 환경변수 설정
+
+프로젝트 루트에 `.env.local` 파일을 생성하고 다음 내용을 추가하세요:
+
+```bash
+# Railway 백엔드 API Base URL
+NEXT_PUBLIC_API_BASE_URL=https://worldcupback-production.up.railway.app
+```
+
+**주의사항:**
+
+- `.env.local` 파일은 `.gitignore`에 포함되어 Git에 커밋되지 않습니다
+- Vercel 배포 시에는 Vercel 대시보드에서 환경변수를 설정해야 합니다
+- 환경변수가 설정되지 않으면 개발 서버 실행 시 에러가 발생합니다
+
 ### 개발 서버 실행
 
 ```bash
@@ -24,6 +39,11 @@ npm run dev
 ```
 
 브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 확인하세요.
+
+**환경변수 확인:**
+
+- 환경변수가 누락된 경우 브라우저 콘솔에 경고 메시지가 표시됩니다
+- API 호출 시 실제 URL이 콘솔에 로그로 출력됩니다
 
 ## 프로젝트 구조
 
