@@ -21,6 +21,7 @@ import Flag from "@/components/ui/Flag";
 import SquadBuilder, { Formation } from "@/components/squad/SquadBuilder";
 import ImageSquadBuilder from "@/components/squad/ImageSquadBuilder";
 import PlayerList from "@/components/cards/PlayerList";
+import { normalizeText } from "@/src/utils/normalizeText";
 
 export default function GroupsTab() {
   // 선택된 국가 ID (국가 모달 표시용)
@@ -161,39 +162,33 @@ export default function GroupsTab() {
    * 띄어쓰기를 제거하고 검색 (예: "손 흥민" → "손흥민"으로 검색)
    * 국가 이름 검색은 앞글자부터 시작해야 함 (startsWith 기반)
    * 선수 이름 검색은 fuzzy matching 사용
+   * normalizeText를 사용하여 유니코드 정규화 및 whitespace 제거
    */
   const matchesSearch = useCallback(
     (teamId: string, query: string): boolean => {
       if (!query) return true;
 
-      // 검색어에서 띄어쓰기 제거 및 소문자 변환
-      const normalizedQuery = query.trim().replace(/\s+/g, "").toLowerCase();
+      // 검색어 정규화 (NFC, 모든 whitespace 제거, 소문자 변환)
+      const normalizedQuery = normalizeText(query);
 
       const country = getCountryById(teamId);
       if (!country) {
         // 플레이오프 승자는 검색어가 포함되어 있으면 표시
-        const playoffName = getPlayoffName(teamId)
-          .replace(/\s+/g, "")
-          .toLowerCase();
+        const playoffName = normalizeText(getPlayoffName(teamId));
         return fuzzyMatch(playoffName, normalizedQuery);
       }
 
-      // 팀 이름으로 검색 (띄어쓰기 제거, 앞글자부터 시작해야 함)
-      const normalizedCountryName = country.name
-        .replace(/\s+/g, "")
-        .toLowerCase();
+      // 팀 이름으로 검색 (앞글자부터 시작해야 함)
+      const normalizedCountryName = normalizeText(country.name);
       if (normalizedCountryName.startsWith(normalizedQuery)) {
         return true;
       }
 
-      // 선수 이름으로 검색 (띄어쓰기 제거) - 한국어 및 영어 모두 검색
+      // 선수 이름으로 검색 - 한국어 및 영어 모두 검색
       const players = getPlayersByCountry(teamId);
       return players.some((player) => {
-        const normalizedPlayerName = player.name
-          .replace(/\s+/g, "")
-          .toLowerCase();
-        const normalizedPlayerNameEn =
-          player.nameEn?.replace(/\s+/g, "").toLowerCase() || "";
+        const normalizedPlayerName = normalizeText(player.name);
+        const normalizedPlayerNameEn = player.nameEn ? normalizeText(player.nameEn) : "";
         return (
           fuzzyMatch(normalizedPlayerName, normalizedQuery) ||
           fuzzyMatch(normalizedPlayerNameEn, normalizedQuery)
@@ -283,18 +278,18 @@ export default function GroupsTab() {
   // 검색어에 맞는 국가 목록 (국가 이름으로 검색했을 때)
   // 성능 최적화: useMemo로 검색 결과 캐싱
   // 국가 이름 검색은 앞글자부터 시작해야 함 (startsWith 기반)
+  // normalizeText를 사용하여 유니코드 정규화 및 whitespace 제거
   const searchedCountries = useMemo(() => {
     if (!searchQuery) return [];
 
-    const normalizedQuery = searchQuery.trim().replace(/\s+/g, "").toLowerCase();
+    // 검색어 정규화 (NFC, 모든 whitespace 제거, 소문자 변환)
+    const normalizedQuery = normalizeText(searchQuery);
     const results: Array<{ countryId: string; countryName: string }> = [];
 
     // 모든 국가를 순회하며 국가 이름으로 검색
     // 앞글자부터 시작하는 검색만 허용
     countries.forEach((country) => {
-      const normalizedCountryName = country.name
-        .replace(/\s+/g, "")
-        .toLowerCase();
+      const normalizedCountryName = normalizeText(country.name);
       if (normalizedCountryName.startsWith(normalizedQuery)) {
         results.push({
           countryId: country.id,
@@ -307,10 +302,12 @@ export default function GroupsTab() {
   }, [searchQuery]);
 
   // 검색어에 맞는 선수 목록 (선수 이름으로 검색했을 때만)
+  // normalizeText를 사용하여 유니코드 정규화 및 whitespace 제거
   const searchedPlayers = useMemo(() => {
     if (!searchQuery) return [];
 
-    const normalizedQuery = searchQuery.replace(/\s+/g, "").toLowerCase();
+    // 검색어 정규화 (NFC, 모든 whitespace 제거, 소문자 변환)
+    const normalizedQuery = normalizeText(searchQuery);
     const results: Array<{
       player: Player;
       countryId: string;
@@ -328,11 +325,8 @@ export default function GroupsTab() {
       // 선수 이름으로 검색 - 한국어 및 영어 모두 검색
       // 개선된 fuzzy matching 사용
       players.forEach((player) => {
-        const normalizedPlayerName = player.name
-          .replace(/\s+/g, "")
-          .toLowerCase();
-        const normalizedPlayerNameEn =
-          player.nameEn?.replace(/\s+/g, "").toLowerCase() || "";
+        const normalizedPlayerName = normalizeText(player.name);
+        const normalizedPlayerNameEn = player.nameEn ? normalizeText(player.nameEn) : "";
         if (
           fuzzyMatch(normalizedPlayerName, normalizedQuery) ||
           fuzzyMatch(normalizedPlayerNameEn, normalizedQuery)

@@ -14,6 +14,7 @@ import { useState, useMemo } from "react";
 import { stadiums } from "@/data/stadiums";
 import StadiumModal from "@/components/modals/StadiumModal";
 import StadiumMapOverlay from "@/components/maps/StadiumMapOverlay";
+import { normalizeText } from "@/src/utils/normalizeText";
 
 export default function StadiumsTab() {
   // 선택된 경기장 ID (모달 표시용)
@@ -31,18 +32,19 @@ export default function StadiumsTab() {
    * useMemo로 최적화: stadiums 배열이 변경되지 않는 한 재계산하지 않음
    * 띄어쓰기를 제거하고 검색 (예: "So Fi" → "SoFi"로 검색)
    * 국가 이름 검색은 앞글자부터 시작해야 함 (startsWith 기반)
+   * normalizeText를 사용하여 유니코드 정규화 및 whitespace 제거
    */
   const groupedStadiums = useMemo(() => {
     const filtered = searchQuery
       ? stadiums.filter((stadium) => {
-          // 검색어에서 띄어쓰기 제거 및 소문자 변환
-          const normalizedQuery = searchQuery.trim().replace(/\s+/g, "").toLowerCase();
+          // 검색어 정규화 (NFC, 모든 whitespace 제거, 소문자 변환)
+          const normalizedQuery = normalizeText(searchQuery);
 
           // 경기장 이름, 도시는 includes 사용 (기존 동작 유지)
           // 국가 이름은 앞글자부터 시작해야 함
-          const normalizedName = stadium.name.replace(/\s+/g, "").toLowerCase();
-          const normalizedCity = stadium.city.replace(/\s+/g, "").toLowerCase();
-          const normalizedCountry = stadium.country.replace(/\s+/g, "").toLowerCase();
+          const normalizedName = normalizeText(stadium.name);
+          const normalizedCity = normalizeText(stadium.city);
+          const normalizedCountry = normalizeText(stadium.country);
 
           return (
             normalizedName.includes(normalizedQuery) ||

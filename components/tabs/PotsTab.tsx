@@ -16,6 +16,7 @@ import { getCountryById } from "@/data/countries";
 import { getPlayersByCountry } from "@/data/players";
 import CountryModal from "@/components/modals/CountryModal";
 import Flag from "@/components/ui/Flag";
+import { normalizeText } from "@/src/utils/normalizeText";
 
 export default function PotsTab() {
   // 선택된 국가 ID (국가 모달 표시용)
@@ -89,31 +90,32 @@ export default function PotsTab() {
    * 팀이 검색어와 일치하는지 확인 (팀 이름 또는 선수 이름으로 검색)
    * 띄어쓰기를 제거하고 검색 (예: "손 흥민" → "손흥민"으로 검색)
    * 국가 이름 검색은 앞글자부터 시작해야 함 (startsWith 기반)
+   * normalizeText를 사용하여 유니코드 정규화 및 whitespace 제거
    */
   const matchesSearch = (teamId: string, query: string): boolean => {
     if (!query) return true;
 
-    // 검색어에서 띄어쓰기 제거 및 소문자 변환
-    const normalizedQuery = query.trim().replace(/\s+/g, "").toLowerCase();
+    // 검색어 정규화 (NFC, 모든 whitespace 제거, 소문자 변환)
+    const normalizedQuery = normalizeText(query);
 
     const country = getCountryById(teamId);
     if (!country) {
       // 플레이오프 승자는 검색어가 포함되어 있으면 표시
-      const playoffName = getPlayoffName(teamId).replace(/\s+/g, "").toLowerCase();
+      const playoffName = normalizeText(getPlayoffName(teamId));
       return playoffName.includes(normalizedQuery);
     }
 
-    // 팀 이름으로 검색 (띄어쓰기 제거, 앞글자부터 시작해야 함)
-    const normalizedCountryName = country.name.replace(/\s+/g, "").toLowerCase();
+    // 팀 이름으로 검색 (앞글자부터 시작해야 함)
+    const normalizedCountryName = normalizeText(country.name);
     if (normalizedCountryName.startsWith(normalizedQuery)) {
       return true;
     }
 
-    // 선수 이름으로 검색 (띄어쓰기 제거) - 한국어 및 영어 모두 검색
+    // 선수 이름으로 검색 - 한국어 및 영어 모두 검색
     const players = getPlayersByCountry(teamId);
     return players.some((player) => {
-      const normalizedPlayerName = player.name.replace(/\s+/g, "").toLowerCase();
-      const normalizedPlayerNameEn = player.nameEn?.replace(/\s+/g, "").toLowerCase() || "";
+      const normalizedPlayerName = normalizeText(player.name);
+      const normalizedPlayerNameEn = player.nameEn ? normalizeText(player.nameEn) : "";
       return normalizedPlayerName.includes(normalizedQuery) || normalizedPlayerNameEn.includes(normalizedQuery);
     });
   };

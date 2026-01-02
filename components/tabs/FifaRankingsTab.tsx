@@ -18,6 +18,7 @@ import CountryModal from "@/components/modals/CountryModal";
 import SearchBar from "@/components/search/SearchBar";
 import Flag from "@/components/ui/Flag";
 import { Filter, ChevronDown, ArrowUp, ArrowDown, X } from "lucide-react";
+import { normalizeText } from "@/src/utils/normalizeText";
 
 interface RankingData {
   countryId: string;
@@ -132,18 +133,19 @@ export default function FifaRankingsTab() {
   /**
    * 팀이 검색어와 일치하는지 확인 (useCallback으로 메모이제이션)
    * 검색어는 국가 이름의 앞글자부터 시작해야 함 (startsWith 기반)
+   * normalizeText를 사용하여 유니코드 정규화 및 whitespace 제거
    */
   const matchesSearch = useCallback((teamId: string, query: string): boolean => {
     if (!query) return true;
 
-    // 검색어에서 띄어쓰기 제거 및 소문자 변환
-    const normalizedQuery = query.trim().replace(/\s+/g, "").toLowerCase();
+    // 검색어 정규화 (NFC, 모든 whitespace 제거, 소문자 변환)
+    const normalizedQuery = normalizeText(query);
 
     const country = getCountryById(teamId);
     if (!country) return false;
 
-    // 팀 이름으로 검색 (띄어쓰기 제거, 앞글자부터 시작해야 함)
-    const normalizedCountryName = country.name.replace(/\s+/g, "").toLowerCase();
+    // 국가 이름 정규화 후 앞글자부터 시작하는지 확인
+    const normalizedCountryName = normalizeText(country.name);
     return normalizedCountryName.startsWith(normalizedQuery);
   }, []);
 
