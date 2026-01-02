@@ -12,18 +12,24 @@
 
 "use client";
 
+// 탭 배열을 단일 소스로 관리 (as const로 literal type 보장)
+const TABS = [
+  { id: "groups", label: "경기 일정" },
+  { id: "stadiums", label: "경기장" },
+  { id: "pots", label: "포트" },
+  { id: "fifarankings", label: "FIFA 랭킹 순위" },
+] as const;
+
+// 탭 ID의 union type 추출 및 export
+export type TabId = (typeof TABS)[number]["id"];
+
 interface TabsProps {
-  activeTab: "pots" | "groups" | "stadiums" | "fifarankings"; // 현재 활성화된 탭
-  onTabChange: (tab: "pots" | "groups" | "stadiums" | "fifarankings") => void; // 탭 변경 핸들러
+  activeTab: TabId; // 현재 활성화된 탭
+  onTabChange: (tab: TabId) => void; // 탭 변경 핸들러
 }
 
 export default function Tabs({ activeTab, onTabChange }: TabsProps) {
-  const tabs = [
-    { id: "groups" as const, label: "경기 일정" },
-    { id: "stadiums" as const, label: "경기장" },
-    { id: "pots" as const, label: "포트" },
-    { id: "fifarankings" as const, label: "FIFA 랭킹 순위" },
-  ];
+  const tabs = TABS;
 
   return (
     <div className="flex justify-center border-b-2 border-gray-200 mb-6 overflow-x-auto">
@@ -33,11 +39,8 @@ export default function Tabs({ activeTab, onTabChange }: TabsProps) {
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`px-4 md:px-6 py-3 font-semibold text-sm md:text-lg transition-colors duration-300 whitespace-nowrap ${
-              activeTab === tab.id
-                ? "text-blue-600 border-b-2 border-blue-600 -mb-[2px]"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-          >
+              activeTab === tab.id ? "text-blue-600 border-b-2 border-blue-600 -mb-[2px]" : "text-gray-600 hover:text-gray-800"
+            }`}>
             {tab.label}
           </button>
         ))}

@@ -16,7 +16,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import Tabs from "@/components/tabs/Tabs";
+import Tabs, { type TabId } from "@/components/tabs/Tabs";
 import PotsTab from "@/components/tabs/PotsTab";
 import GroupsTab from "@/components/tabs/GroupsTab";
 import StadiumsTab from "@/components/tabs/StadiumsTab";
@@ -67,9 +67,7 @@ const FLAG_TRANSITION = {
 export default function Home() {
   // hydration 에러 방지를 위해 초기값을 null로 설정
   const [showIntro, setShowIntro] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<
-    "pots" | "groups" | "stadiums" | "fifarankings"
-  >("groups");
+  const [activeTab, setActiveTab] = useState<TabId>("groups");
 
   // 선택된 경기장 ID (모달 표시용)
   const [selectedStadium, setSelectedStadium] = useState<string | null>(null);
