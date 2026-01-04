@@ -23,6 +23,13 @@ import { normalizeText } from "@/src/utils/normalizeText";
 import Flag from "@/components/ui/Flag";
 import { getCountryByTeamName } from "@/data/countries";
 
+// Flag 컴포넌트가 요구하는 필수 필드 검증 타입 가드
+function isValidFlagCountry(
+  country: { nameEn?: string; nameKo?: string; flagEmoji?: string; flagImageUrl?: string; code?: string } | undefined
+): country is { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string } {
+  return !!(country && country.nameKo && country.nameEn && country.flagEmoji);
+}
+
 export default function TeamDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -233,9 +240,11 @@ export default function TeamDetailPage() {
             {(() => {
               // team.name으로 직접 country 정보 조회 (data 파일의 countryNameMapping 사용)
               const country = getCountryByTeamName(teamStanding.team.name);
-              return country ? (
-                <Flag country={country} size="xl" />
-              ) : (
+              // Flag 컴포넌트가 요구하는 필수 필드(nameKo, nameEn, flagEmoji)가 모두 있는지 확인
+              if (isValidFlagCountry(country)) {
+                return <Flag country={country} size="xl" />;
+              }
+              return (
                 <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
                   <span className="text-xs text-gray-500">{teamStanding.team.name.substring(0, 3)}</span>
                 </div>
