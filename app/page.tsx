@@ -123,6 +123,11 @@ export default function Home() {
 
   return (
     <>
+      {/* 언어 변경 버튼 - 항상 표시 */}
+      <div className="fixed top-4 right-4 z-[100]">
+        <LanguageSwitcher />
+      </div>
+
       <AnimatePresence>
         {showIntro ? (
           <motion.div
@@ -261,11 +266,6 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="max-w-7xl mx-auto relative z-10"
             >
-              {/* 언어 변경 버튼 */}
-              <div className="fixed top-4 right-4 z-50">
-                <LanguageSwitcher />
-              </div>
-
               {/* Hero 섹션 */}
               <section className="p-4 md:p-8 pt-8 md:pt-12 pb-12 md:pb-16">
                 <div className="text-center mb-8">
