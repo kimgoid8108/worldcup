@@ -12,13 +12,7 @@
 
 "use client";
 
-// 탭 배열을 단일 소스로 관리 (as const로 literal type 보장)
-const TABS = [
-  { id: "groups", label: "경기 일정" },
-  { id: "stadiums", label: "경기장" },
-  { id: "pots", label: "포트" },
-  { id: "fifarankings", label: "FIFA 랭킹 순위" },
-] as const;
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // 탭 ID의 union type 추출 및 export
 export type TabId = (typeof TABS)[number]["id"];
@@ -29,7 +23,14 @@ interface TabsProps {
 }
 
 export default function Tabs({ activeTab, onTabChange }: TabsProps) {
-  const tabs = TABS;
+  const { t } = useLanguage();
+  
+  const tabs = [
+    { id: "groups" as const, label: t("tabs.matchSchedule") },
+    { id: "stadiums" as const, label: t("tabs.stadiums") },
+    { id: "pots" as const, label: t("tabs.pots") },
+    { id: "fifarankings" as const, label: t("tabs.fifaRankings") },
+  ];
 
   return (
     <div className="flex justify-center border-b-2 border-gray-200 mb-6 overflow-x-auto">

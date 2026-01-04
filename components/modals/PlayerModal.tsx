@@ -11,6 +11,8 @@
 
 import { useEffect, useMemo, useCallback } from "react";
 import { type Player } from "@/types/player";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getPlayerNameByLanguage } from "@/utils/playerUtils";
 
 interface PlayerModalProps {
   player: Player | null;
@@ -18,12 +20,19 @@ interface PlayerModalProps {
   onClose: () => void;
 }
 
-// 포지션 한글 변환 맵 (컴포넌트 외부로 이동하여 재생성 방지)
-const POSITION_MAP: Record<string, string> = {
+// 포지션 언어별 변환 맵
+const POSITION_MAP_KO: Record<string, string> = {
   GK: "골키퍼",
   DF: "수비수",
   MF: "미드필더",
   FW: "공격수",
+};
+
+const POSITION_MAP_EN: Record<string, string> = {
+  GK: "Goalkeeper",
+  DF: "Defender",
+  MF: "Midfielder",
+  FW: "Forward",
 };
 
 // 스크롤 복원 헬퍼 함수
@@ -40,6 +49,7 @@ const restoreScroll = () => {
 };
 
 export default function PlayerModal({ player, countryName, onClose }: PlayerModalProps) {
+  const { language, t } = useLanguage();
   /**
    * ESC 키로 모달 닫기
    * PlayerModal은 최상위 모달이므로 capture phase에서 먼저 처리
@@ -98,8 +108,14 @@ export default function PlayerModal({ player, countryName, onClose }: PlayerModa
     };
   }, [player]);
 
-  // 포지션 한글 변환 메모이제이션 (hooks는 항상 같은 순서로 호출되어야 함)
-  const positionName = useMemo(() => player ? (POSITION_MAP[player.position] || player.position) : '', [player]);
+  // 포지션 언어별 변환 메모이제이션 (hooks는 항상 같은 순서로 호출되어야 함)
+  const positionName = useMemo(() => {
+    if (!player) return '';
+    const positionMap = language === "ko" ? POSITION_MAP_KO : POSITION_MAP_EN;
+    return positionMap[player.position] || player.position;
+  }, [player, language]);
+  
+  const playerName = useMemo(() => getPlayerNameByLanguage(player, language), [player, language]);
 
   // 배경 클릭 핸들러 메모이제이션 (hooks는 early return 이전에 호출되어야 함)
   const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -141,7 +157,7 @@ export default function PlayerModal({ player, countryName, onClose }: PlayerModa
               <div className="flex-shrink-0">
                 <img
                   src={player.imageUrl}
-                  alt={player.name}
+                  alt={playerName}
                   className="w-48 h-48 md:w-64 md:h-64 object-cover rounded-lg shadow-lg"
                   onError={(e) => {
                     // 이미지 로드 실패 시 숨김
@@ -157,29 +173,42 @@ export default function PlayerModal({ player, countryName, onClose }: PlayerModa
                 <p className="text-sm text-gray-600 mb-2">{countryName}</p>
               )}
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
-                {player.name}
+                {playerName}
               </h2>
-              {player.nameEn && (
+              {language === "ko" && player.nameEn && (
                 <p className="text-xl md:text-2xl text-gray-600 mb-4">
                   {player.nameEn}
+                </p>
+              )}
+              {language === "en" && player.name && player.name !== player.nameEn && (
+                <p className="text-xl md:text-2xl text-gray-600 mb-4">
+                  {player.name}
                 </p>
               )}
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2 justify-center md:justify-start">
-                  <span className="text-gray-600 font-medium">포지션:</span>
+                  <span className="text-gray-600 font-medium">
+                    {language === "ko" ? "포지션" : "Position"}:
+                  </span>
                   <span className="text-gray-800 font-semibold">
                     {positionName} ({player.position})
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2 justify-center md:justify-start">
-                  <span className="text-gray-600 font-medium">나이:</span>
-                  <span className="text-gray-800 font-semibold">{player.age}세</span>
+                  <span className="text-gray-600 font-medium">
+                    {language === "ko" ? "나이" : "Age"}:
+                  </span>
+                  <span className="text-gray-800 font-semibold">
+                    {player.age}{language === "ko" ? "세" : ""}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2 justify-center md:justify-start">
-                  <span className="text-gray-600 font-medium">소속 클럽:</span>
+                  <span className="text-gray-600 font-medium">
+                    {language === "ko" ? "소속 클럽" : "Club"}:
+                  </span>
                   <span className="text-gray-800 font-semibold">{player.club}</span>
                 </div>
               </div>

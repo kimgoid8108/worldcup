@@ -12,6 +12,7 @@
 import { useEffect, useRef } from "react";
 import { stadiums } from "@/data/stadiums";
 import StadiumViewer from "@/components/ui/StadiumViewer";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface StadiumModalProps {
   stadiumId: string | null;
@@ -19,8 +20,21 @@ interface StadiumModalProps {
 }
 
 export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) {
+  const { t, language } = useLanguage();
+  
   // 경기장 ID로 경기장 정보 조회
   const stadium = stadiumId ? stadiums.find((s) => s.id === stadiumId) : null;
+  
+  // 국가명을 언어에 따라 변환
+  const getCountryName = (countryCode: string): string => {
+    const countryMap: Record<string, { ko: string; en: string }> = {
+      "USA": { ko: "미국", en: "United States" },
+      "Canada": { ko: "캐나다", en: "Canada" },
+      "Mexico": { ko: "멕시코", en: "Mexico" },
+    };
+    const country = countryMap[countryCode];
+    return country ? (language === "ko" ? country.ko : country.en) : countryCode;
+  };
   
   // 3D 뷰어 섹션 참조 (모바일에서 스크롤용)
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -157,10 +171,10 @@ export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) 
                 {stadium.name}
               </h2>
               <p className="text-gray-600">
-                {stadium.city}, {stadium.country}
+                {stadium.city}, {getCountryName(stadium.country)}
               </p>
               <p className="text-sm text-blue-600 font-semibold mt-1">
-                수용 인원: {stadium.capacity.toLocaleString()}명
+                {t("stadium.capacity")}: {stadium.capacity.toLocaleString()}{t("stadium.people")}
               </p>
             </div>
             {/* 모바일: 간단한 헤더 */}
@@ -179,12 +193,12 @@ export default function StadiumModal({ stadiumId, onClose }: StadiumModalProps) 
           </div>
 
           {/* 경기장 설명 (데스크톱에서만 표시) */}
-          <p className="text-gray-700 mb-6 hidden md:block">{stadium.description}</p>
+          <p className="text-gray-700 mb-6 hidden md:block">{t("stadium.description")}</p>
 
           {/* 3D 경기장 뷰어 섹션 */}
           <div ref={viewerRef} className="mt-6">
             <h3 className="text-xl font-semibold mb-4 text-gray-800">
-              3D 경기장 뷰어
+              {t("stadium.viewer3d")}
             </h3>
             <StadiumViewer modelId={stadium.sketchfabModelId} author={stadium.author} />
           </div>

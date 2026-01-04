@@ -18,6 +18,8 @@ import SearchBar from "@/components/search/SearchBar";
 import Flag from "@/components/ui/Flag";
 import { Filter, ChevronDown, ArrowUp, ArrowDown, X } from "lucide-react";
 import { normalizeText } from "@/src/utils/normalizeText";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getCountryNameByIdAndLanguage } from "@/data/countries";
 
 interface RankingData {
   countryId: string;
@@ -104,17 +106,18 @@ const getContinentByCountry = (countryId: string): string => {
   return continentMap[countryId] || "other";
 };
 
-const CONTINENTS = [
-  { id: "all", name: "전체" },
-  { id: "asia", name: "아시아" },
-  { id: "europe", name: "유럽" },
-  { id: "southamerica", name: "남미" },
-  { id: "northamerica", name: "북중미" },
-  { id: "africa", name: "아프리카" },
-  { id: "oceania", name: "오세아니아" },
-];
-
 export default function FifaRankingsTab() {
+  const { t, language } = useLanguage();
+  
+  const CONTINENTS = [
+    { id: "all", name: t("fifa.all") },
+    { id: "asia", name: t("fifa.asia") },
+    { id: "europe", name: t("fifa.europe") },
+    { id: "southamerica", name: t("fifa.southamerica") },
+    { id: "northamerica", name: t("fifa.northamerica") },
+    { id: "africa", name: t("fifa.africa") },
+    { id: "oceania", name: t("fifa.oceania") },
+  ];
   // 선택된 국가 ID (국가 모달 표시용)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   // 검색어
@@ -144,7 +147,8 @@ export default function FifaRankingsTab() {
     if (!country) return false;
 
     // 국가 이름 정규화 후 앞글자부터 시작하는지 확인
-    const normalizedCountryName = normalizeText(country.nameKo || "");
+    const countryName = language === "ko" ? (country.nameKo || "") : (country.nameEn || "");
+    const normalizedCountryName = normalizeText(countryName);
     return normalizedCountryName.startsWith(normalizedQuery);
   }, []);
 
@@ -237,17 +241,17 @@ export default function FifaRankingsTab() {
     <>
       {/* 메인 리스트 - 항상 렌더링되어야 함 (언마운트 방지) */}
       <div className="bg-white rounded-lg shadow-lg p-3 md:p-6" style={{ position: "relative", zIndex: 1 }}>
-        <h2 className="text-xl md:text-3xl font-bold mb-4 md:mb-6 text-gray-800 text-center border-b-2 md:border-b-4 border-blue-500 pb-2 md:pb-3">FIFA 랭킹 순위</h2>
+        <h2 className="text-xl md:text-3xl font-bold mb-4 md:mb-6 text-gray-800 text-center border-b-2 md:border-b-4 border-blue-500 pb-2 md:pb-3">{t("fifa.rankings")}</h2>
 
         {/* 검색 섹션 및 Filters 버튼 */}
         <div className="max-w-5xl mx-auto mb-3 md:mb-4 flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between">
           <div className="flex-1 w-full md:max-w-md">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="팀 이름으로 검색..." />
+            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder={t("fifa.searchByTeamName")} />
           </div>
           <div className="relative w-full md:w-auto">
             <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 w-full md:w-auto border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm md:text-base">
               <Filter size={16} />
-              <span>{selectedContinent === "all" ? "전체" : CONTINENTS.find((c) => c.id === selectedContinent)?.name}</span>
+              <span>{selectedContinent === "all" ? t("fifa.all") : CONTINENTS.find((c) => c.id === selectedContinent)?.name}</span>
             </button>
             {isFilterOpen && (
               <>
@@ -279,42 +283,42 @@ export default function FifaRankingsTab() {
             {/* 테이블 헤더 */}
             <div className="hidden md:grid gap-4 mb-3 px-4 py-2" style={{ gridTemplateColumns: "50px 1fr 120px 120px 100px 50px" }}>
               <div className="flex items-center justify-center gap-1 cursor-pointer" onClick={() => handleSort("rank")}>
-                <span className="text-sm font-semibold text-gray-500">랭킹</span>
+                <span className="text-sm font-semibold text-gray-500">{t("fifa.rank")}</span>
                 {sortColumn === "rank" && (sortDirection === "asc" ? <ArrowUp size={14} className="text-gray-500" /> : <ArrowDown size={14} className="text-gray-500" />)}
               </div>
               <div className="flex items-center justify-center">
-                <span className="text-sm font-semibold text-gray-500">국가</span>
+                <span className="text-sm font-semibold text-gray-500">{t("fifa.country")}</span>
               </div>
               <div className="flex items-center justify-center gap-1 cursor-pointer" onClick={() => handleSort("points")}>
-                <span className="text-sm font-semibold text-gray-500">현재 포인트</span>
+                <span className="text-sm font-semibold text-gray-500">{t("fifa.currentPoints")}</span>
                 {sortColumn === "points" && (sortDirection === "asc" ? <ArrowUp size={14} className="text-gray-500" /> : <ArrowDown size={14} className="text-gray-500" />)}
               </div>
               <div className="flex items-center justify-center">
-                <span className="text-sm font-semibold text-gray-500">이전 포인트</span>
+                <span className="text-sm font-semibold text-gray-500">{t("fifa.previousPoints")}</span>
               </div>
               <div className="flex items-center justify-center">
-                <span className="text-sm font-semibold text-gray-500">변동</span>
+                <span className="text-sm font-semibold text-gray-500">{t("fifa.change")}</span>
               </div>
               <div className="flex items-center justify-center">
-                <span className="text-sm font-semibold text-gray-500">더보기</span>
+                <span className="text-sm font-semibold text-gray-500">{t("fifa.more")}</span>
               </div>
             </div>
 
             {/* 모바일 헤더 */}
             <div className="md:hidden grid gap-2 mb-2 px-2 py-2" style={{ gridTemplateColumns: "35px 1fr 60px 50px" }}>
               <div className="flex items-center justify-center gap-1 cursor-pointer" onClick={() => handleSort("rank")}>
-                <span className="text-xs font-semibold text-gray-500">순위</span>
+                <span className="text-xs font-semibold text-gray-500">{t("fifa.rank")}</span>
                 {sortColumn === "rank" && (sortDirection === "asc" ? <ArrowUp size={12} className="text-gray-500" /> : <ArrowDown size={12} className="text-gray-500" />)}
               </div>
               <div className="flex items-center justify-start">
-                <span className="text-xs font-semibold text-gray-500">팀</span>
+                <span className="text-xs font-semibold text-gray-500">{t("fifa.country")}</span>
               </div>
               <div className="flex items-center justify-center gap-1 cursor-pointer" onClick={() => handleSort("points")}>
-                <span className="text-xs font-semibold text-gray-500">포인트</span>
+                <span className="text-xs font-semibold text-gray-500">{t("fifa.currentPoints")}</span>
                 {sortColumn === "points" && (sortDirection === "asc" ? <ArrowUp size={12} className="text-gray-500" /> : <ArrowDown size={12} className="text-gray-500" />)}
               </div>
               <div className="flex items-center justify-center">
-                <span className="text-xs font-semibold text-gray-500">변동</span>
+                <span className="text-xs font-semibold text-gray-500">{t("fifa.change")}</span>
               </div>
             </div>
 
@@ -341,7 +345,9 @@ export default function FifaRankingsTab() {
                       {/* Team */}
                       <div className="flex items-center justify-center gap-3">
                         <Flag country={country} size="md" />
-                        <span className="font-medium text-gray-800">{country.nameKo}</span>
+                        <span className="font-medium text-gray-800">
+                          {getCountryNameByIdAndLanguage(data.countryId, language) || country.nameKo}
+                        </span>
                       </div>
 
                       {/* Total Points */}
@@ -383,7 +389,9 @@ export default function FifaRankingsTab() {
                         <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                           <Flag country={country} size="sm" />
                         </div>
-                        <span className="font-medium text-gray-800 text-xs truncate whitespace-nowrap flex-1">{country.nameKo}</span>
+                        <span className="font-medium text-gray-800 text-xs truncate whitespace-nowrap flex-1">
+                          {getCountryNameByIdAndLanguage(data.countryId, language) || country.nameKo}
+                        </span>
                       </div>
 
                       {/* Points */}
@@ -415,13 +423,13 @@ export default function FifaRankingsTab() {
             {selectedContinent === "all" && !showAll && rankingData.length > 10 && (
               <div className="mt-4 md:mt-6 text-center">
                 <button onClick={() => setShowAll(true)} className="px-4 md:px-6 py-2 text-sm md:text-base border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                  전체 랭킹 보기
+                  {t("fifa.allRankings")}
                 </button>
               </div>
             )}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-600">검색 결과가 없습니다.</div>
+          <div className="text-center py-8 text-gray-600">{t("fifa.noResults")}</div>
         )}
       </div>
 

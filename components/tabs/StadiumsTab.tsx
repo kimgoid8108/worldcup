@@ -15,8 +15,21 @@ import { stadiums } from "@/data/stadiums";
 import StadiumModal from "@/components/modals/StadiumModal";
 import StadiumMapOverlay from "@/components/maps/StadiumMapOverlay";
 import { normalizeText } from "@/src/utils/normalizeText";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function StadiumsTab() {
+  const { t, language } = useLanguage();
+  
+  // 국가명을 언어에 따라 변환
+  const getCountryName = (countryCode: string): string => {
+    const countryMap: Record<string, { ko: string; en: string }> = {
+      "USA": { ko: "미국", en: "United States" },
+      "Canada": { ko: "캐나다", en: "Canada" },
+      "Mexico": { ko: "멕시코", en: "Mexico" },
+    };
+    const country = countryMap[countryCode];
+    return country ? (language === "ko" ? country.ko : country.en) : countryCode;
+  };
   // 선택된 경기장 ID (모달 표시용)
   const [selectedStadium, setSelectedStadium] = useState<string | null>(null);
 
@@ -44,7 +57,8 @@ export default function StadiumsTab() {
           // 국가 이름은 앞글자부터 시작해야 함
           const normalizedName = normalizeText(stadium.name);
           const normalizedCity = normalizeText(stadium.city);
-          const normalizedCountry = normalizeText(stadium.country);
+          const countryName = getCountryName(stadium.country);
+          const normalizedCountry = normalizeText(countryName);
 
           return (
             normalizedName.includes(normalizedQuery) ||
@@ -55,13 +69,14 @@ export default function StadiumsTab() {
       : stadiums;
 
     return filtered.reduce((acc, stadium) => {
-      if (!acc[stadium.country]) {
-        acc[stadium.country] = [];
+      const countryName = getCountryName(stadium.country);
+      if (!acc[countryName]) {
+        acc[countryName] = [];
       }
-      acc[stadium.country].push(stadium);
+      acc[countryName].push(stadium);
       return acc;
     }, {} as Record<string, typeof stadiums>);
-  }, [searchQuery]);
+  }, [searchQuery, language]);
 
   // 국가 목록 (정렬된 순서)
   const countries = useMemo(() => Object.keys(groupedStadiums), [groupedStadiums]);
@@ -76,7 +91,7 @@ export default function StadiumsTab() {
 
       <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
         <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">
-          경기장 정보
+          {t("stadiums.stadiumInfo")}
         </h2>
 
         {/* 검색 입력 */}
@@ -84,7 +99,7 @@ export default function StadiumsTab() {
           <div className="relative">
             <input
               type="text"
-              placeholder="경기장 이름, 도시, 국가로 검색..."
+              placeholder={t("stadiums.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-800"
@@ -97,7 +112,7 @@ export default function StadiumsTab() {
         <div id="stadium-map" className="mb-8">
           <div className="bg-gray-50 rounded-lg shadow-md p-4 md:p-6 mb-6">
             <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-800">
-              경기장 지도
+              {t("stadiums.stadiumMap")}
             </h3>
 
             {/* 커스텀 지도 오버레이 (마커 포함) */}
@@ -108,7 +123,7 @@ export default function StadiumsTab() {
             />
 
             <p className="text-sm text-gray-600 mt-4">
-              지도에서 경기장 위치를 확인할 수 있습니다. 경기장 마커를 클릭하거나 아래 목록에서 경기장을 클릭하면 상세 정보를 볼 수 있습니다.
+              {t("stadiums.mapDescription")}
             </p>
           </div>
         </div>
@@ -116,8 +131,8 @@ export default function StadiumsTab() {
         {/* 경기장 목록 섹션 */}
         <div id="stadium-list">
           <p className="text-center text-gray-600 mb-6">
-            총 {stadiums.length}개 경기장
-            {searchQuery && ` (검색 결과: ${Object.values(groupedStadiums).flat().length}개)`}
+            {t("stadiums.totalStadiums")} {stadiums.length}{t("stadiums.searchResults")}
+            {searchQuery && ` (${t("groups.searchResults")}: ${Object.values(groupedStadiums).flat().length}${t("stadiums.searchResults")})`}
           </p>
 
           {/* 국가별로 그룹화된 경기장 목록 */}
@@ -125,7 +140,7 @@ export default function StadiumsTab() {
             countries.map((country) => (
               <div key={country} className="mb-12">
                 <h2 className="text-xl md:text-2xl font-bold mb-4 text-gray-700 border-b-2 border-gray-300 pb-2">
-                  {country} ({groupedStadiums[country].length}개)
+                  {country} ({groupedStadiums[country].length}{language === "ko" ? "개" : ""})
                 </h2>
 
                 {/* 경기장 그리드 */}
@@ -163,7 +178,7 @@ export default function StadiumsTab() {
             ))
           ) : (
             <div className="text-center py-8 text-gray-600">
-              검색 결과가 없습니다.
+              {t("stadiums.noSearchResults")}
             </div>
           )}
         </div>

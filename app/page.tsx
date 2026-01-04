@@ -26,6 +26,8 @@ import { countries } from "@/data/countries";
 import { stadiums } from "@/data/stadiums";
 import { groups } from "@/data/groups";
 import Flag from "@/components/ui/Flag";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // 상수 정의
 const HOST_NATIONS = [
@@ -65,6 +67,8 @@ const FLAG_TRANSITION = {
 } as const;
 
 export default function Home() {
+  const { t } = useLanguage();
+  
   // hydration 에러 방지를 위해 초기값을 null로 설정
   const [showIntro, setShowIntro] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("groups");
@@ -108,8 +112,8 @@ export default function Home() {
   // 계산된 값 메모이제이션
   const statsText = useMemo(
     () =>
-      `Road to 2026: ${countries.length} Nations | ${stadiums.length} Host Cities`,
-    []
+      `${t("main.roadTo2026")}: ${countries.length}${t("main.nations")} | ${stadiums.length}${t("main.hostCities")}`,
+    [t, countries.length, stadiums.length]
   );
 
   // hydration 완료 전에는 아무것도 렌더링하지 않음 (hydration 에러 방지)
@@ -181,7 +185,7 @@ export default function Home() {
                   className="px-12 py-4 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bold text-lg md:text-xl rounded-full shadow-2xl hover:shadow-yellow-500/50 transition-all duration-300 uppercase tracking-wider"
                   style={BUTTON_STYLE}
                 >
-                  NEXT
+                  {t("main.next")}
                 </motion.button>
               </div>
             </div>
@@ -257,15 +261,19 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="max-w-7xl mx-auto relative z-10"
             >
+              {/* 언어 변경 버튼 */}
+              <div className="fixed top-4 right-4 z-50">
+                <LanguageSwitcher />
+              </div>
+
               {/* Hero 섹션 */}
               <section className="p-4 md:p-8 pt-8 md:pt-12 pb-12 md:pb-16">
                 <div className="text-center mb-8">
                   <h1 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
-                    2026 북중미 월드컵 경기장 & 데이터 플랫폼
+                    {t("main.title")}
                   </h1>
                   <p className="text-lg md:text-xl text-gray-600 mb-8">
-                    경기장, 국가, 선수 정보를 지도와 3D 모델로 한눈에
-                    확인하세요.
+                    {t("main.subtitle")}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
                     <Link
@@ -288,7 +296,7 @@ export default function Home() {
                       }}
                       className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                     >
-                      경기 일정
+                      {t("main.matchSchedule")}
                     </Link>
                     <Link
                       href="#"
@@ -308,7 +316,7 @@ export default function Home() {
                       }}
                       className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     >
-                      경기장 지도 보기
+                      {t("main.stadiumMap")}
                     </Link>
                     <Link
                       href="#"
@@ -330,7 +338,7 @@ export default function Home() {
                       }}
                       className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
                     >
-                      참가 국가
+                      {t("main.participatingCountries")}
                     </Link>
                   </div>
                 </div>
@@ -340,25 +348,27 @@ export default function Home() {
               <section className="px-4 md:px-8 mb-12 md:mb-16">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                    <h3 className="text-sm text-gray-600 mb-2">개최국</h3>
+                    <h3 className="text-sm text-gray-600 mb-2">{t("main.hostNations")}</h3>
                     <p className="text-base font-semibold text-gray-800">
-                      미국 · 캐나다 · 멕시코
+                      {t("language.english") === "English" ? "USA · Canada · Mexico" : "미국 · 캐나다 · 멕시코"}
                     </p>
                   </div>
                   <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                    <h3 className="text-sm text-gray-600 mb-2">경기장 수</h3>
+                    <h3 className="text-sm text-gray-600 mb-2">{t("main.stadiumCount")}</h3>
                     <p className="text-2xl font-bold text-gray-800">
                       {stadiums.length}+
                     </p>
                   </div>
                   <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                    <h3 className="text-sm text-gray-600 mb-2">참가국</h3>
-                    <p className="text-2xl font-bold text-gray-800">48개국</p>
+                    <h3 className="text-sm text-gray-600 mb-2">{t("main.participatingCountriesCount")}</h3>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {t("language.english") === "English" ? "48 Countries" : "48개국"}
+                    </p>
                   </div>
                   <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                    <h3 className="text-sm text-gray-600 mb-2">대회 시작</h3>
+                    <h3 className="text-sm text-gray-600 mb-2">{t("main.tournamentStart")}</h3>
                     <p className="text-base font-semibold text-gray-800">
-                      2026년 6월
+                      {t("language.english") === "English" ? "June 2026" : "2026년 6월"}
                     </p>
                   </div>
                 </div>
@@ -367,7 +377,7 @@ export default function Home() {
               {/* 주요 경기장 하이라이트 */}
               <section className="px-4 md:px-8 mb-12 md:mb-16">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">
-                  주요 경기장
+                  {t("main.majorStadiums")}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {stadiums
@@ -386,7 +396,7 @@ export default function Home() {
                           {stadium.city}, {stadium.country}
                         </p>
                         <p className="text-gray-500 text-xs">
-                          수용 인원: {stadium.capacity.toLocaleString()}명
+                          {t("main.capacity")}: {stadium.capacity.toLocaleString()}{t("main.people")}
                         </p>
                       </button>
                     ))}
@@ -401,7 +411,7 @@ export default function Home() {
                 {/* 헤더: 제목 */}
                 <div className="flex justify-center items-center mb-6 md:mb-8">
                   <h1 className="text-2xl md:text-4xl font-bold text-gray-800">
-                    2026 북중미 월드컵
+                    {t("main.worldCup2026")}
                   </h1>
                 </div>
 

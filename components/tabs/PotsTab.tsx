@@ -27,8 +27,11 @@ import type { FrontTeam, FrontPlayersResponse } from "@/src/types/api";
 import PlayerList from "@/components/cards/PlayerList";
 import { type Player } from "@/types/player";
 import PlayerModal from "@/components/modals/PlayerModal";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getCountryNameByLanguage } from "@/data/countries";
 
 export default function PotsTab() {
+  const { t, language } = useLanguage();
   // 검색어
   const [searchQuery, setSearchQuery] = useState("");
   // 선택된 포트 필터 (기본값: 첫 번째 포트)
@@ -68,7 +71,8 @@ export default function PotsTab() {
       }
 
       // 팀 이름으로 검색 (앞글자부터 시작해야 함)
-      const normalizedCountryName = normalizeText(country.nameKo || "");
+      const countryName = getCountryNameByLanguage(country, language) || country.nameKo || "";
+      const normalizedCountryName = normalizeText(countryName);
       return normalizedCountryName.startsWith(normalizedQuery);
     },
     [countriesList]
@@ -303,7 +307,7 @@ export default function PotsTab() {
   return (
     <div>
       <div id="pots-content" className="bg-white rounded-lg shadow-lg p-4 md:p-6">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">포트별 팀 정보</h2>
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">{t("pots.potTeams")}</h2>
 
         {/* 검색 및 필터 섹션 */}
         <div className="mb-6 space-y-4">
@@ -311,7 +315,7 @@ export default function PotsTab() {
           <div className="relative">
             <input
               type="text"
-              placeholder="팀 이름으로 검색..."
+              placeholder={t("pots.searchByTeamName")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-800"
@@ -346,7 +350,7 @@ export default function PotsTab() {
                     if (typeof teamNameOrPlayoff === "string" && teamNameOrPlayoff.startsWith("playoff_")) {
                       return (
                         <div key={`${pot.id}-${teamNameOrPlayoff}-${index}`} className="px-4 py-3 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 text-center">
-                          <div className="text-sm font-medium text-gray-700">{teamNameOrPlayoff.replace("playoff_", "").replace(/_/g, " ").toUpperCase()} 플레이오프 승자</div>
+                          <div className="text-sm font-medium text-gray-700">{teamNameOrPlayoff.replace("playoff_", "").replace(/_/g, " ").toUpperCase()}{t("pots.playoffWinner")}</div>
                         </div>
                       );
                     }
@@ -382,7 +386,9 @@ export default function PotsTab() {
                         onClick={() => handleTeamClick(team.id!, team)}
                         className="px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 flex flex-col items-center justify-center gap-2 relative group hover:bg-blue-100 hover:border-blue-400 transition-colors cursor-pointer">
                         <Flag country={country} size="lg" />
-                        <span className="text-sm font-semibold text-gray-800 text-center">{country.nameKo}</span>
+                        <span className="text-sm font-semibold text-gray-800 text-center">
+                          {getCountryNameByLanguage(country, language) || country.nameKo}
+                        </span>
                         {fifaRanking && (
                           <span className="text-xs text-gray-500 mt-1">
                             FIFA {fifaRanking.rank}위 ({fifaRanking.points}점)
@@ -397,13 +403,13 @@ export default function PotsTab() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-600">검색 결과가 없습니다.</div>
+          <div className="text-center py-8 text-gray-600">{t("pots.noSearchResults")}</div>
         )}
 
         {/* API 로드 실패 시 fallback UI */}
         {teamsError && (
           <div className="mt-6 bg-red-50 border-2 border-red-200 rounded-lg p-4">
-            <p className="text-red-800 font-semibold mb-2">⚠️ 팀 정보를 불러올 수 없습니다</p>
+            <p className="text-red-800 font-semibold mb-2">{t("pots.teamInfoError")}</p>
             <p className="text-sm text-red-600">{teamsError}</p>
           </div>
         )}
@@ -435,7 +441,7 @@ export default function PotsTab() {
                     const country = getCountryByTeamId(playersData.team.id, countriesList);
                     return country ? <Flag country={country} size="md" /> : null;
                   })()}
-                <h3 className="text-xl md:text-2xl font-bold">{playersData?.team.name || "선수 명단"}</h3>
+                <h3 className="text-xl md:text-2xl font-bold">{playersData?.team.name || t("pots.playerList")}</h3>
               </div>
               <button
                 onClick={() => {
@@ -452,18 +458,18 @@ export default function PotsTab() {
             <div className="p-6">
               {playersLoading ? (
                 <div className="text-center py-16">
-                  <p className="text-gray-600">선수 명단을 불러오는 중...</p>
+                  <p className="text-gray-600">{t("pots.loadingPlayers")}</p>
                 </div>
               ) : playersError ? (
                 <div className="text-center py-16">
-                  <p className="text-red-600 font-semibold mb-2">⚠️ 오류 발생</p>
+                  <p className="text-red-600 font-semibold mb-2">{t("pots.error")}</p>
                   <p className="text-sm text-gray-600">{playersError}</p>
                 </div>
               ) : playersList.length > 0 ? (
                 <PlayerList players={playersList} onPlayerClick={(player) => setSelectedPlayer(player)} />
               ) : (
                 <div className="text-center py-16">
-                  <p className="text-gray-600">선수 명단이 없습니다.</p>
+                  <p className="text-gray-600">{t("pots.noPlayers")}</p>
                 </div>
               )}
             </div>

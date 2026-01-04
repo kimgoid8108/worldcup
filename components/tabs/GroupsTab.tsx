@@ -21,8 +21,12 @@ import SquadBuilder, { Formation } from "@/components/squad/SquadBuilder";
 import ImageSquadBuilder from "@/components/squad/ImageSquadBuilder";
 import PlayerList from "@/components/cards/PlayerList";
 import { normalizeText } from "@/src/utils/normalizeText";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getCountryNameByIdAndLanguage } from "@/data/countries";
+import { getPlayerNameByLanguage } from "@/utils/playerUtils";
 
 export default function GroupsTab() {
+  const { t, language } = useLanguage();
   // 선택된 국가 ID (국가 모달 표시용)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
@@ -172,17 +176,18 @@ export default function GroupsTab() {
       // 검색어 정규화 (NFC, 모든 whitespace 제거, 소문자 변환)
       const normalizedQuery = normalizeText(query);
 
-      const country = getCountryById(teamId);
-      if (!country) {
-        // 플레이오프 승자는 검색어가 포함되어 있으면 표시
-        const playoffName = normalizeText(getPlayoffName(teamId));
-        return fuzzyMatch(playoffName, normalizedQuery);
-      }
+    const country = getCountryById(teamId);
+    if (!country) {
+      // 플레이오프 승자는 검색어가 포함되어 있으면 표시
+      const playoffName = normalizeText(getPlayoffName(teamId));
+      return fuzzyMatch(playoffName, normalizedQuery);
+    }
 
-      // 팀 이름으로 검색 (앞글자부터 시작해야 함)
-      // 선수 데이터는 백엔드 API에서만 가져오므로 로컬 데이터 기반 선수 검색 제거
-      const normalizedCountryName = normalizeText(country.nameKo || "");
-      return normalizedCountryName.startsWith(normalizedQuery);
+    // 팀 이름으로 검색 (앞글자부터 시작해야 함)
+    // 선수 데이터는 백엔드 API에서만 가져오므로 로컬 데이터 기반 선수 검색 제거
+    const countryName = language === "ko" ? (country.nameKo || "") : (country.nameEn || "");
+    const normalizedCountryName = normalizeText(countryName);
+    return normalizedCountryName.startsWith(normalizedQuery);
     },
     []
   );
@@ -293,19 +298,20 @@ export default function GroupsTab() {
       });
     });
 
-    // 각 countryId로 국가 정보 조회 및 검색
-    allCountryIds.forEach((countryId) => {
-      const country = getCountryById(countryId);
-      if (!country) return; // 플레이오프 승자 등은 제외
+      // 각 countryId로 국가 정보 조회 및 검색
+      allCountryIds.forEach((countryId) => {
+        const country = getCountryById(countryId);
+        if (!country) return; // 플레이오프 승자 등은 제외
 
-      const normalizedCountryName = normalizeText(country.nameKo || "");
-      if (normalizedCountryName.startsWith(normalizedQuery)) {
-        results.push({
-          countryId: countryId,
-          countryName: country.nameKo || "",
-        });
-      }
-    });
+        const countryName = language === "ko" ? (country.nameKo || "") : (country.nameEn || "");
+        const normalizedCountryName = normalizeText(countryName);
+        if (normalizedCountryName.startsWith(normalizedQuery)) {
+          results.push({
+            countryId: countryId,
+            countryName: countryName,
+          });
+        }
+      });
 
     return results;
   }, [searchQuery]);
@@ -360,7 +366,8 @@ export default function GroupsTab() {
     }
 
     // 국가 이름만 검색 (앞글자부터 시작해야 함)
-    const normalizedCountryName = normalizeText(country.nameKo || "");
+    const countryName = language === "ko" ? (country.nameKo || "") : (country.nameEn || "");
+    const normalizedCountryName = normalizeText(countryName);
     return normalizedCountryName.startsWith(normalizedQuery);
   }, []);
 
@@ -424,10 +431,10 @@ export default function GroupsTab() {
           const team2 = getCountryById(selectedMatch.team2);
           const stadium = getStadium(selectedMatch.stadium);
           const team1Name = team1
-            ? team1.nameKo
+            ? getCountryNameByIdAndLanguage(selectedMatch.team1, language) || team1.nameKo
             : getPlayoffName(selectedMatch.team1);
           const team2Name = team2
-            ? team2.nameKo
+            ? getCountryNameByIdAndLanguage(selectedMatch.team2, language) || team2.nameKo
             : getPlayoffName(selectedMatch.team2);
           // 선수 데이터는 백엔드 API에서만 가져오므로 로컬 데이터 제거
           // 경기 상세 모달에서는 선수 명단 표시 기능 비활성화
@@ -437,10 +444,10 @@ export default function GroupsTab() {
 
           const getPositionName = (position: string): string => {
             const positionMap: Record<string, string> = {
-              GK: "골키퍼",
-              DF: "수비수",
-              MF: "미드필더",
-              FW: "공격수",
+              GK: t("language.english") === "English" ? "Goalkeeper" : "골키퍼",
+              DF: t("language.english") === "English" ? "Defender" : "수비수",
+              MF: t("language.english") === "English" ? "Midfielder" : "미드필더",
+              FW: t("language.english") === "English" ? "Forward" : "공격수",
             };
             return positionMap[position] || position;
           };
@@ -502,7 +509,7 @@ export default function GroupsTab() {
                         : "text-gray-600 hover:text-gray-800"
                     }`}
                   >
-                    스쿼드
+                    {t("groups.squad")}
                   </button>
                   <button
                     onClick={() => setMatchModalTab("players")}
@@ -512,7 +519,7 @@ export default function GroupsTab() {
                         : "text-gray-600 hover:text-gray-800"
                     }`}
                   >
-                    선수 명단
+                    {t("groups.playerList")}
                   </button>
                   <button
                     onClick={() => setMatchModalTab("stadium")}
@@ -522,7 +529,7 @@ export default function GroupsTab() {
                         : "text-gray-600 hover:text-gray-800"
                     }`}
                   >
-                    경기장 정보
+                    {t("groups.stadiumInfo")}
                   </button>
                 </div>
 
@@ -657,12 +664,12 @@ export default function GroupsTab() {
                     <div className="bg-blue-50 rounded-lg p-3 md:p-4 border-2 border-blue-200">
                       <h4 className="text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
                         <span>🏟️</span>
-                        <span>경기장 정보</span>
+                        <span>{t("groups.stadiumInfo")}</span>
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 text-xs md:text-sm">
                         <div>
                           <span className="font-semibold text-gray-700">
-                            경기장명:
+                            {t("groups.stadiumName")}:
                           </span>
                           <span className="ml-2 text-gray-800">
                             {stadium.name}
@@ -670,7 +677,7 @@ export default function GroupsTab() {
                         </div>
                         <div>
                           <span className="font-semibold text-gray-700">
-                            위치:
+                            {t("groups.location")}:
                           </span>
                           <span className="ml-2 text-gray-800">
                             {stadium.city}, {stadium.country}
@@ -678,15 +685,15 @@ export default function GroupsTab() {
                         </div>
                         <div>
                           <span className="font-semibold text-gray-700">
-                            수용 인원:
+                            {t("groups.capacity")}:
                           </span>
                           <span className="ml-2 text-gray-800">
-                            {stadium.capacity.toLocaleString()}명
+                            {stadium.capacity.toLocaleString()}{t("main.people")}
                           </span>
                         </div>
                         <div>
                           <span className="font-semibold text-gray-700">
-                            경기 시간:
+                            {t("groups.matchTime")}:
                           </span>
                           <span className="ml-2 text-gray-800">
                             {selectedMatch.date} {selectedMatch.time}
@@ -696,7 +703,7 @@ export default function GroupsTab() {
                       {stadium.description && (
                         <div className="mt-4">
                           <span className="font-semibold text-gray-700">
-                            설명:
+                            {t("groups.description")}:
                           </span>
                           <p className="mt-2 text-gray-800">
                             {stadium.description}
@@ -715,12 +722,12 @@ export default function GroupsTab() {
       <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6 min-h-[330px]">
         <div className="relative">
           <h3 className="text-lg font-semibold text-gray-800 mb-3">
-            선수 및 국가 검색
+            {t("groups.searchPlayersAndCountries")}
           </h3>
           <div className="relative">
             <input
               type="text"
-              placeholder="국가 이름으로 검색..."
+              placeholder={t("groups.searchByCountryName")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-800"
@@ -734,7 +741,7 @@ export default function GroupsTab() {
               {searchedCountries.length > 0 ? (
                 <>
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                    검색된 국가 ({searchedCountries.length}개)
+                    {t("groups.searchResults")} ({searchedCountries.length}{t("groups.countries")}
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {searchedCountries.map(({ countryId, countryName }) => {
@@ -761,7 +768,7 @@ export default function GroupsTab() {
                 </>
               ) : (
                 <div className="text-center py-8 text-gray-600 min-h-[80px] flex items-center justify-center">
-                  검색 결과가 없습니다. 국가 이름으로 검색해주세요.
+                  {t("groups.noSearchResults")}
                 </div>
               )}
             </div>
@@ -777,19 +784,19 @@ export default function GroupsTab() {
         style={{ overflow: 'visible' }}
       >
         <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center border-b-4 border-blue-500 pb-3">
-          전체 경기 일정
+          {t("groups.fullMatchSchedule")}
         </h2>
 
         {/* 경기 일정 검색 및 날짜 선택 */}
         <div className={`sticky top-0 bg-white py-4 mb-6 space-y-4 border-2 border-gray-300 rounded-lg shadow-md border-b-4 border-gray-200 px-4 ${selectedMatch ? 'z-[30]' : 'z-50'}`}>
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-3">
-              국가 이름으로 경기 검색
+              {t("groups.searchByCountryNameForMatch")}
             </h3>
             <div className="relative">
               <input
                 type="text"
-                placeholder="국가 이름으로 검색..."
+                placeholder={t("groups.searchByCountryName")}
                 value={matchSearchQuery}
                 onChange={(e) => setMatchSearchQuery(e.target.value)}
                 className="w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-800"
@@ -799,7 +806,7 @@ export default function GroupsTab() {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-3">
-              날짜로 경기 검색
+              {t("groups.searchByDate")}
             </h3>
             <div className="flex items-center gap-2">
               <div
@@ -827,7 +834,7 @@ export default function GroupsTab() {
                   onClick={() => setSelectedDate("")}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors whitespace-nowrap"
                 >
-                  날짜 초기화
+                  {t("groups.resetDate")}
                 </button>
               )}
             </div>
@@ -839,12 +846,15 @@ export default function GroupsTab() {
             Object.keys(filteredMatchesByDate).map((date) => {
               const dateMatches = filteredMatchesByDate[date];
               const dateObj = new Date(date);
-              const formattedDate = `${dateObj.getFullYear()}년 ${
-                dateObj.getMonth() + 1
-              }월 ${dateObj.getDate()}일`;
-              const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][
-                dateObj.getDay()
-              ];
+              const isEnglish = t("language.english") === "English";
+              const formattedDate = isEnglish
+                ? `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`
+                : `${dateObj.getFullYear()}${t("groups.year")} ${
+                    dateObj.getMonth() + 1
+                  }${t("groups.month")} ${dateObj.getDate()}${t("groups.day")}`;
+              const dayOfWeek = isEnglish
+                ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dateObj.getDay()]
+                : ["일", "월", "화", "수", "목", "금", "토"][dateObj.getDay()] + "요일";
 
               return (
                 <div
@@ -852,17 +862,17 @@ export default function GroupsTab() {
                   className="border-b-2 border-gray-200 pb-6 last:border-b-0"
                 >
                   <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
-                    📅 {formattedDate} ({dayOfWeek}요일)
+                    📅 {formattedDate} ({dayOfWeek})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {dateMatches.map((match) => {
                       const team1 = getCountryById(match.team1);
                       const team2 = getCountryById(match.team2);
                       const team1Name = team1
-                        ? team1.nameKo
+                        ? getCountryNameByIdAndLanguage(match.team1, language) || team1.nameKo
                         : getPlayoffName(match.team1);
                       const team2Name = team2
-                        ? team2.nameKo
+                        ? getCountryNameByIdAndLanguage(match.team2, language) || team2.nameKo
                         : getPlayoffName(match.team2);
                       const stadium = getStadium(match.stadium);
 
@@ -892,7 +902,7 @@ export default function GroupsTab() {
                               </span>
                             </div>
                             <span className="text-lg font-bold text-gray-500">
-                              VS
+                              {t("groups.vs")}
                             </span>
                             <div className="flex flex-col items-center gap-1">
                               {team2 ? (
@@ -919,7 +929,7 @@ export default function GroupsTab() {
             })
           ) : (
             <div className="text-center py-16 text-gray-600 min-h-[150px] flex items-center justify-center">
-              검색 결과가 없습니다.
+              {t("groups.noResults")}
             </div>
           )}
         </div>

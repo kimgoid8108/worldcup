@@ -205,6 +205,31 @@ export const getEnglishNameByTeamId = (teamId: number | null | undefined, countr
 };
 
 /**
+ * 언어에 따라 국가 이름 반환 (UI 전용)
+ *
+ * @param country - Country 객체
+ * @param language - 언어 ("ko" | "en")
+ * @returns 언어에 맞는 국가명 또는 undefined
+ */
+export const getCountryNameByLanguage = (country: Country | undefined, language: "ko" | "en"): string | undefined => {
+  if (!country) return undefined;
+  return language === "ko" ? country.nameKo : country.nameEn;
+};
+
+/**
+ * countryId로 언어에 따라 국가 이름 반환 (UI 전용)
+ *
+ * @param countryId - 국가 ID (string)
+ * @param language - 언어 ("ko" | "en")
+ * @returns 언어에 맞는 국가명 또는 undefined
+ */
+export const getCountryNameByIdAndLanguage = (countryId: string, language: "ko" | "en"): string | undefined => {
+  const country = getCountryById(countryId);
+  if (!country) return undefined;
+  return language === "ko" ? country.nameKo : country.nameEn;
+};
+
+/**
  * countryId(string) → nameEn(string) 매핑 테이블
  * ⚠️ 중요: pots.ts의 countryId를 nameEn으로 변환하기 위한 매핑입니다.
  */

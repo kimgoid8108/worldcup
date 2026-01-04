@@ -21,6 +21,8 @@ import ModalHeader from "./ModalHeader";
 import PlayerList from "@/components/cards/PlayerList";
 import SquadBuilder, { Formation } from "@/components/squad/SquadBuilder";
 import ImageSquadBuilder from "@/components/squad/ImageSquadBuilder";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getCountryNameByIdAndLanguage } from "@/data/countries";
 
 interface CountryModalProps {
   countryId: string | null;
@@ -28,8 +30,16 @@ interface CountryModalProps {
 }
 
 export default function CountryModal({ countryId, onClose }: CountryModalProps) {
+  const { language, t } = useLanguage();
+  
   // 국가 ID로 국가 정보 조회
   const country = useMemo(() => countryId ? getCountryById(countryId) : null, [countryId]);
+  
+  // 언어에 따라 국가 이름 가져오기
+  const countryName = useMemo(() => {
+    if (!countryId || !country) return undefined;
+    return getCountryNameByIdAndLanguage(countryId, language) || country.nameKo;
+  }, [countryId, country, language]);
 
   // 국가 ID로 선수 목록 조회
   const players = useMemo(() => countryId ? getPlayersByCountry(countryId) : [], [countryId]);
@@ -185,7 +195,7 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
           <div className="p-6">
             {/* 헤더: 국가 정보 및 닫기 버튼 */}
             <ModalHeader
-              title={country.name}
+              title={countryName || countryId}
               subtitle={country.code}
               onClose={onClose}
             >
@@ -193,7 +203,7 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
                 <Flag country={country} size="xl" />
                 {fifaRanking && fifaRank && (
                   <p className="text-sm text-blue-600 font-semibold mt-1">
-                    FIFA 랭킹: {fifaRank}위 ({fifaRanking}점)
+                    {t("fifa.ranking")}: {fifaRank}{t("fifa.rankShort")} ({fifaRanking}{t("fifa.points")})
                   </p>
                 )}
               </div>
