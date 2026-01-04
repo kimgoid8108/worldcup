@@ -7,9 +7,17 @@ export default function LanguageSwitcher() {
   const { language, setLanguage, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // 클라이언트 사이드 마운트 확인
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
+    if (!mounted) return;
+    
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -23,7 +31,18 @@ export default function LanguageSwitcher() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, mounted]);
+
+  // 마운트 전에는 렌더링하지 않음 (hydration 에러 방지)
+  if (!mounted) {
+    return (
+      <div className="relative">
+        <div className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white border-2 border-gray-300 rounded-lg">
+          <span className="text-xl">🌐</span>
+        </div>
+      </div>
+    );
+  }
 
   const languages = [
     { code: "ko" as const, label: t("language.korean"), flag: "🇰🇷" },

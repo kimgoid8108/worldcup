@@ -7,6 +7,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import translationsData from "@/translations/translations";
 
 export type Language = "ko" | "en";
 
@@ -22,9 +23,6 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("ko");
-  const [translations, setTranslations] = useState<
-    Record<string, Record<Language, string>>
-  >({});
 
   // localStorage에서 언어 설정 불러오기
   useEffect(() => {
@@ -34,13 +32,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         setLanguageState(savedLanguage);
       }
     }
-  }, []);
-
-  // 번역 데이터 로드
-  useEffect(() => {
-    import("@/translations/translations").then((module) => {
-      setTranslations(module.default);
-    });
   }, []);
 
   // 언어 변경 함수
@@ -53,7 +44,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   // 번역 함수
   const t = (key: string): string => {
-    const translation = translations[key];
+    const translation = translationsData[key];
     if (!translation) {
       console.warn(`Translation key "${key}" not found`);
       return key;

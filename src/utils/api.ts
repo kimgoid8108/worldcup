@@ -16,6 +16,8 @@ import type {
   FrontTeam,
   PlayersResponse,
   FrontPlayersResponse,
+  TeamStanding,
+  StandingsResponse,
 } from "@/src/types/api";
 import { mapApiTeams, mapApiPlayersResponse } from "./apiMappers";
 
@@ -62,7 +64,7 @@ function getApiBaseUrl(): string {
     if (env === "development") {
       throw new Error(
         "NEXT_PUBLIC_API_BASE_URL 환경변수가 설정되지 않았습니다.\n" +
-        ".env.local 파일을 확인하고 개발 서버를 재시작하세요."
+          ".env.local 파일을 확인하고 개발 서버를 재시작하세요."
       );
     }
 
@@ -263,11 +265,7 @@ export async function fetchPlayersByTeamId(
     const apiResponse: PlayersResponse = await response.json();
 
     // 프론트엔드 타입으로 변환
-    const mappedData = mapApiPlayersResponse(
-      apiResponse,
-      teamId,
-      fallbackTeam
-    );
+    const mappedData = mapApiPlayersResponse(apiResponse, teamId, fallbackTeam);
 
     if (!mappedData) {
       throw new Error("선수 데이터 변환 실패");
@@ -300,6 +298,33 @@ export async function fetchPlayersByTeamId(
 
     throw error;
   }
+}
+
+/**
+ * Standings API 호출 (빌드 에러 방지용)
+ *
+ * ⚠️ 중요: 이 함수는 빌드 에러 방지를 위한 스텁입니다.
+ * 실제로는 사용되지 않으며, 호출 시 즉시 Error를 throw합니다.
+ * Standings/FIFA Rankings는 data 파일로 관리합니다.
+ *
+ * @throws Error 항상 에러를 throw합니다
+ */
+export async function fetchStandings(): Promise<StandingsResponse> {
+  throw new Error("Standings API는 사용하지 않습니다. data 파일을 사용하세요.");
+}
+
+/**
+ * 플레이오프 팀 여부 확인 (빌드 에러 방지용)
+ *
+ * ⚠️ 중요: 이 함수는 빌드 에러 방지를 위한 스텁입니다.
+ *
+ * @param teamId - 팀 ID
+ * @returns false (항상 false 반환)
+ */
+export function isPlayoffTeam(teamId: number | null): boolean {
+  // 빌드 에러 방지용 스텁 함수
+  // 실제로는 teamId가 null인 경우 플레이오프 팀으로 간주
+  return teamId === null;
 }
 
 /* ============================================
