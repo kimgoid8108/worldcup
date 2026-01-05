@@ -25,18 +25,18 @@ export default function CountryCard({
   highlight = false,
   className = "",
 }: CountryCardProps) {
-  const fifaRanking = showRanking ? getFifaRanking(country.id) : null;
-  const fifaRank = showRanking ? getFifaRank(country.id) : null;
+  const fifaRanking = showRanking && country.id ? getFifaRanking(country.id) : null;
+  const fifaRank = showRanking && country.id ? getFifaRank(country.id) : null;
 
   return (
     <button
-      onClick={() => onClick?.(country.id)}
+      onClick={() => country.id && onClick?.(country.id)}
       className={`px-4 py-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-row items-center justify-between relative group max-w-2xl mx-auto w-full ${className}`}
     >
       <Flag country={country} size="xl" />
       <div className="flex flex-col items-end">
         <span className="text-sm font-semibold text-gray-800">
-          {country.name}
+          {country.nameKo || country.nameEn || ""}
         </span>
         {fifaRanking && fifaRank && (
           <span className="text-xs text-gray-600">
