@@ -470,8 +470,8 @@ export default function GroupsTab() {
                 {/* 모달 헤더 */}
                 <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 md:p-4 rounded-none md:rounded-t-lg flex items-center justify-between z-10">
                   <h3 className="text-base md:text-2xl font-bold flex items-center gap-1 md:gap-3 flex-1 min-w-0">
-                    {team1 ? (
-                      <Flag country={team1} size="sm" className="md:hidden" />
+                    {team1 && team1.nameKo && team1.flagEmoji ? (
+                      <Flag country={team1 as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="sm" className="md:hidden" />
                     ) : (
                       <span className="text-lg md:text-2xl">⚽</span>
                     )}
@@ -480,15 +480,19 @@ export default function GroupsTab() {
                       VS
                     </span>
                     <span className="truncate text-xs md:text-base">{team2Name}</span>
-                    {team2 ? (
-                      <Flag country={team2} size="sm" className="md:hidden" />
+                    {team2 && team2.nameKo && team2.flagEmoji ? (
+                      <Flag country={team2 as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="sm" className="md:hidden" />
                     ) : (
                       <span className="text-lg md:text-2xl">⚽</span>
                     )}
                     {/* 데스크톱에서만 표시되는 플래그 */}
                     <div className="hidden md:flex items-center gap-3">
-                      {team1 && <Flag country={team1} size="md" />}
-                      {team2 && <Flag country={team2} size="md" />}
+                      {team1 && team1.nameKo && team1.flagEmoji && (
+                        <Flag country={team1 as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="md" />
+                      )}
+                      {team2 && team2.nameKo && team2.flagEmoji && (
+                        <Flag country={team2 as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="md" />
+                      )}
                     </div>
                   </h3>
                   <button
@@ -543,7 +547,9 @@ export default function GroupsTab() {
                         {/* 팀1 헤더 */}
                         {team1 && (
                           <div className="flex items-center gap-2 flex-1">
-                            {team1 && <Flag country={team1} size="sm" />}
+                            {team1 && team1.nameKo && team1.flagEmoji && (
+                              <Flag country={team1 as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="sm" />
+                            )}
                             <h4 className="text-sm md:text-lg font-semibold text-gray-700 truncate">
                               {team1Name}
                             </h4>
@@ -581,7 +587,9 @@ export default function GroupsTab() {
                             <h4 className="text-sm md:text-lg font-semibold text-gray-700 truncate">
                               {team2Name}
                             </h4>
-                            {team2 && <Flag country={team2} size="sm" />}
+                            {team2 && team2.nameKo && team2.flagEmoji && (
+                              <Flag country={team2 as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="sm" />
+                            )}
                           </div>
                         )}
                       </div>
@@ -617,7 +625,9 @@ export default function GroupsTab() {
                       {team1 && team1Players.length > 0 && (
                         <div>
                           <h4 className="text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
-                            {team1 && <Flag country={team1} size="sm" />}
+                            {team1 && team1.nameKo && team1.flagEmoji && (
+                              <Flag country={team1 as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="sm" />
+                            )}
                             <span className="truncate">{team1Name}</span>
                           </h4>
                           <div className="bg-gray-50 rounded-lg p-3 md:p-4 max-h-[400px] md:max-h-[600px] overflow-y-auto">
@@ -639,7 +649,9 @@ export default function GroupsTab() {
                       {team2 && team2Players.length > 0 && (
                         <div>
                           <h4 className="text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
-                            {team2 && <Flag country={team2} size="sm" />}
+                            {team2 && team2.nameKo && team2.flagEmoji && (
+                              <Flag country={team2 as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="sm" />
+                            )}
                             <span className="truncate">{team2Name}</span>
                           </h4>
                           <div className="bg-gray-50 rounded-lg p-3 md:p-4 max-h-[400px] md:max-h-[600px] overflow-y-auto">
@@ -757,7 +769,9 @@ export default function GroupsTab() {
                           }}
                           className="p-4 bg-white rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col items-center justify-center gap-2"
                         >
-                          <Flag country={country} size="lg" />
+                          {country && country.nameKo && country.flagEmoji && (
+                            <Flag country={country as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="lg" />
+                          )}
                           <span className="text-sm font-semibold text-gray-800 text-center">
                             {countryName}
                           </span>
@@ -892,8 +906,8 @@ export default function GroupsTab() {
                           </div>
                           <div className="flex items-center justify-center gap-2 mb-2">
                             <div className="flex flex-col items-center gap-1">
-                              {team1 ? (
-                                <Flag country={team1} size="md" />
+                              {team1 && team1.nameKo && team1.flagEmoji ? (
+                                <Flag country={team1 as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="md" />
                               ) : (
                                 <span className="text-2xl">⚽</span>
                               )}
@@ -905,8 +919,8 @@ export default function GroupsTab() {
                               {t("groups.vs")}
                             </span>
                             <div className="flex flex-col items-center gap-1">
-                              {team2 ? (
-                                <Flag country={team2} size="md" />
+                              {team2 && team2.nameKo && team2.flagEmoji ? (
+                                <Flag country={team2 as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="md" />
                               ) : (
                                 <span className="text-2xl">⚽</span>
                               )}

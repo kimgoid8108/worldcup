@@ -108,7 +108,7 @@ const getContinentByCountry = (countryId: string): string => {
 
 export default function FifaRankingsTab() {
   const { t, language } = useLanguage();
-  
+
   const CONTINENTS = [
     { id: "all", name: t("fifa.all") },
     { id: "asia", name: t("fifa.asia") },
@@ -344,7 +344,9 @@ export default function FifaRankingsTab() {
 
                       {/* Team */}
                       <div className="flex items-center justify-center gap-3">
-                        <Flag country={country} size="md" />
+                        {country && country.nameKo && country.flagEmoji && (
+                          <Flag country={country as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="md" />
+                        )}
                         <span className="font-medium text-gray-800">
                           {getCountryNameByIdAndLanguage(data.countryId, language) || country.nameKo}
                         </span>
@@ -387,7 +389,9 @@ export default function FifaRankingsTab() {
                       {/* Team */}
                       <div className="flex items-center gap-1.5 min-w-0">
                         <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                          <Flag country={country} size="sm" />
+                          {country && country.nameKo && country.flagEmoji && (
+                            <Flag country={country as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="sm" />
+                          )}
                         </div>
                         <span className="font-medium text-gray-800 text-xs truncate whitespace-nowrap flex-1">
                           {getCountryNameByIdAndLanguage(data.countryId, language) || country.nameKo}

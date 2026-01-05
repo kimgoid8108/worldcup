@@ -31,10 +31,10 @@ interface CountryModalProps {
 
 export default function CountryModal({ countryId, onClose }: CountryModalProps) {
   const { language, t } = useLanguage();
-  
+
   // 국가 ID로 국가 정보 조회
   const country = useMemo(() => countryId ? getCountryById(countryId) : null, [countryId]);
-  
+
   // 언어에 따라 국가 이름 가져오기
   const countryName = useMemo(() => {
     if (!countryId || !country) return undefined;
@@ -140,8 +140,8 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
   }, [countryId]);
 
   // FIFA 랭킹 정보 메모이제이션 (hooks는 항상 같은 순서로 호출되어야 함)
-  const fifaRanking = useMemo(() => country ? getFifaRanking(country.id) : null, [country]);
-  const fifaRank = useMemo(() => country ? getFifaRank(country.id) : null, [country]);
+  const fifaRanking = useMemo(() => countryId ? getFifaRanking(countryId) : null, [countryId]);
+  const fifaRank = useMemo(() => countryId ? getFifaRank(countryId) : null, [countryId]);
 
   // 선수 클릭 핸들러 메모이제이션 (hooks는 early return 이전에 호출되어야 함)
   const handlePlayerClick = useCallback((player: Player, e?: React.MouseEvent) => {
@@ -171,7 +171,7 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
       {/* 선수 상세 정보 모달 */}
       <PlayerModal
         player={selectedPlayer}
-        countryName={country?.name}
+        countryName={country ? (country.nameKo || country.nameEn || undefined) : undefined}
         onClose={handleClosePlayerModal}
       />
 
@@ -195,12 +195,14 @@ export default function CountryModal({ countryId, onClose }: CountryModalProps) 
           <div className="p-6">
             {/* 헤더: 국가 정보 및 닫기 버튼 */}
             <ModalHeader
-              title={countryName || countryId}
+              title={countryName || countryId || ""}
               subtitle={country.code}
               onClose={onClose}
             >
               <div className="flex flex-col items-center">
-                <Flag country={country} size="xl" />
+                {country && country.nameKo && country.flagEmoji && (
+                  <Flag country={country as { nameKo: string; nameEn: string; flagEmoji: string; flagImageUrl?: string; code?: string }} size="xl" />
+                )}
                 {fifaRanking && fifaRank && (
                   <p className="text-sm text-blue-600 font-semibold mt-1">
                     {t("fifa.ranking")}: {fifaRank}{t("fifa.rankShort")} ({fifaRanking}{t("fifa.points")})
